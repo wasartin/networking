@@ -1,0 +1,12 @@
+#Object Files
+*.o
+
+#Linker output
+
+#Libraries
+*.lib
+*.a
+
+#Executables
+*.exe
+*.out
