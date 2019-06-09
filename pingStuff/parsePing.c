@@ -100,6 +100,16 @@ int pos(char *line, const char *target, int offset){
   return -1;
 }
 
+int last_index_of(char *line, const char target){
+  int i;
+  for(i = strlen(line) - 1; i > -1; i--){
+    if(target == line[i]){
+      return i;
+    }
+  }
+  return -2;
+}
+
 char *extract_substring(char * line, const char *begin,
 			const char *end, int offset){
   char input[strlen(line)];
@@ -135,20 +145,25 @@ void get_avg_in_file(char *filePath){
     //Get the Section I want
     //printf("%s", line);
     numOfLines++;
+    if(numOfLines == 100){
+      break;
+    }
     int timePos  = pos(buffer, target, 4);
+    int endPos = last_index_of(buffer, ' ');
     if(timePos != -1){
-      char section[11];
-      memmove(section, &buffer[timePos], 11);
-      section[11] ='\0';
+      int length = endPos - timePos;
+      char section[length + 1];//for null byte
+      memmove(section, &buffer[timePos], length);
+      section[length + 1] ='\0';
       //    printf("7th in List: %s\n", hope);
       
       //Extract the value out
       int valuePart = pos(section, "=", 1) + 1;
-      char part2[6];
-      memmove(part2, &section[valuePart], 5);
-      part2[6] = '\0';
+      int newLength = length - valuePart;
+      char part2[newLength + 1]; //removing the 'time='.... techdebt right here baby
+      memmove(part2, &section[valuePart], newLength);
+      part2[newLength + 1] = '\0';
       //printf("Is this the number?: %s\n", part2);
-      
       //convert string value into float
       float currValue = atof(part2);
       runningTotal+= currValue; 
