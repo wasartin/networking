@@ -1,0 +1,24 @@
+Retrying.
+
+--2019-05-27 21:31:08--  (try:11)  http://spock.ee.iastate.edu/netdump.tar
+Connecting to spock.ee.iastate.edu (spock.ee.iastate.edu)|129.186.215.40|:80... failed: Connection timed out.
+Retrying.
+
+--2019-05-27 21:33:27--  (try:12)  http://spock.ee.iastate.edu/netdump.tar
+Connecting to spock.ee.iastate.edu (spock.ee.iastate.edu)|129.186.215.40|:80... failed: Connection timed out.
+Retrying.
+
+--2019-05-27 21:35:46--  (try:13)  http://spock.ee.iastate.edu/netdump.tar
+Connecting to spock.ee.iastate.edu (spock.ee.iastate.edu)|129.186.215.40|:80... failed: Connection timed out.
+Retrying.
+
+--2019-05-27 21:38:05--  (try:14)  http://spock.ee.iastate.edu/netdump.tar
+Connecting to spock.ee.iastate.edu (spock.ee.iastate.edu)|129.186.215.40|:80... failed: Connection timed out.
+Retrying.
+
+--2019-05-27 21:40:25--  (try:15)  http://spock.ee.iastate.edu/netdump.tar
+Connecting to spock.ee.iastate.edu (spock.ee.iastate.edu)|129.186.215.40|:80... failed: Connection timed out.
+Retrying.
+
+--2019-05-27 21:42:44--  (try:16)  http://spock.ee.iastate.edu/netdump.tar
+Connecting to spock.ee.iastate.edu (spock.ee.iastate.edu)|129.186.215.40|:80... 

@@ -1,0 +1,17 @@
+
+6/15
+    -Looks like 5.1a b, c, and d are all totally done. 
+    -Printing in hex, also printing the type/length fields
+    -Adding debugging symbols to program to see how it works.
+    -syntax error when introducing counting packets & displaying
+       Ethernet type
+
+
+
+
+
+
+/Misc dates
+PA1
+
+   -Changed packettype to packet_type
