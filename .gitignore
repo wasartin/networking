@@ -10,3 +10,6 @@
 #Executables
 *.exe
 *.out
+
+#Misc
+temp/

@@ -1,4 +1,4 @@
-/*
+l/*
  * Packet Sniffer 
  * ---------------
  * 
@@ -219,8 +219,7 @@ void default_print_unaligned(register const u_char *cp, register u_int length) {
 /*
  * By default, print the packet out in hex.
  */
-void
-default_print(register const u_char *bp, register u_int length) {
+void default_print(register const u_char *bp, register u_int length) {
 	register const u_short *sp;
 	register u_int i;
 	register int nshorts;
@@ -272,6 +271,7 @@ void print_packet_header(const u_char* packet){
     
     uint16_t IP = 0x800;
     uint16_t ARP = 0x806;
+    uint16_t IPv6 = 0x86DD;
     if(type_or_length == IP){
       printf("Payload = IP\n");
       num_ip_packets++;
@@ -280,8 +280,13 @@ void print_packet_header(const u_char* packet){
       printf("Payload = ARP\n");
       num_arp_packets++;
       //Call function that prints out ARP
+    }
+    else if(type_or_length == IPv6 ){
+      printf("Payload = IPv6\n");
+      //increment this?
     }else{
       printf("Payload is not yet mapped\n");
+      //still don't know what 0x9000 is
     }
   }else{
     printf("Length = %0d\n", packet[12]);
@@ -308,31 +313,92 @@ void raw_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p) {
 }
 
 /* Decode and print out the ARP Packet */
-void decode_ARP_packet(const u_char *packet){
+void decode_ARP_packet(const u_char *packet_data){
   //I think things start at p[14]?
+  printf("Arp Packet");
   //ARP REPLY
-
   //ARP REQUEST
+  int i = 14;
   
-  //HW type (16bits): type of phy network ARP is used on. Ethernet = 1
-  //Protocol Type (16bits): IP has a value of 0x800
-  //HW Len (8bits): length of the hardware addres fields i the header. ethernet is 6
-  //protocol length (8bits): IPv4 has value of 4
-  //Operation(16bits):indicates whether a req or a reply
-  //     req = 1, reply = 2
-  //Sender HW addr (var): ethernet uses 6 bytes here
-  //Sender protocol addr(var): IPV4 uses 4 bytes
-  //Target HW add(var): Eth uses 6 bytes here. In ARP REQ this is all 0
-  //Target protocoladdr(var) IP address of the target. IPv4 uses 4 bytes
+  uint16_t hw_type = packet_data[i++] * 256 + packet_data[i++];
+  uint16_t protocol_type = packet_data[i++] * packet_data[i++];
+  uint8_t hw_len = packet_data[i++];
+  uint8_t protocol_len = packet_data[i++];
+  uint16_t operation = packet_data[i++] * 256 + packet_data[i++];
+
+  u_char sender_hw_addr[hw_len];
+  int h = 0;
+  for(h = 0; h < hw_len; h++){
+    sender_hw_add[h] = packet_data[i++];
+  }
+  //if IPv4, then it is 4 bytes, so IPv6 is 6 bytes?
+  uint8_t sender_protocol_addr[protocol_len];
+  int p = 0;
+  for(p = 0; p < protocol_len; p++){
+    sender_protocol_add[p] = packet_data[i++];
+  }
+  u_char target_hw_addr[hw_len];
+  for(h = 0; h < hw_len; h++){
+    target_hw_addr[h] = packet_data[i++];
+  }
+  uint8_t target_protocol_addr[protocol_len];
+  for(p = 0; p < protocol_len; p++){
+    target_protocol_addr[p] = packet_data[i++];
+  }
+  
+  
+  printf("Hardware type: %u\n", hw_type);
+  printf("Protocol Type: %u\n", protocol_type);
+  printf("Hardware Length: %d", hw_len);
+  printf("Protocol Length: %d\n", protocol_len);
+  printf("Operation: %u\n", operation);
+  if(operation == 1){
+    printf("ARP Request\n");
+  }
+  else if(operation == 2){
+    printf("ARP Request\n");
+  }else {
+    printf("Error : Unknown Arp Operation");
+  }
+  //This is where things can get weird. Got to print out all the things with
+  //  variables lengths. This would probably be better to put into a method
+  //IPv4 does xxx.xxx.xxx.xxx. || IPv6 does xx:xx:xx:xx:
+  //Hardware addresses use the :, but I will diff between IPv later.
+  printf("Sender Hardware Address: ");
+  for(h = 0; h < hw_len; h++){//There has to be a better way to do this
+    printf("%02x", sender_hw_addr[h]);
+    printf((h + 1 < hw_len)? ":" : "\n");
+  }
+  printf("Sender Protocol Address: ");//TODO: Look in printing diff of IPv4/6
+  for(p = 0; p < protocol_len; p++){
+    printf("%d", sender_protocol_addr[p]);
+    printf((p + 1 < protocol_len)? "." : "\n");
+  }
+  printf("Target Hardware Address: ");
+  for(h = 0; h < hw_len; h++){
+    printf("%02x", target_hw_addr[h]);
+    printf((h + 1 < hw_len)? ":" : "\n");
+  }
+  printf("Target Protocol Address: ");
+  for(p = 0; p < protocol_len; p++){
+    printf("%d", target_protocol_addr[p]);//TODO: Look in printing diff of IPv4/6
+    printf((p + 1 < protocol_len)? "." : "\n");
+  }
+  
 }
 
-/* Decode and print out the IP Header, the rest can be printed normally */
+/* Decode and print out the IP Header, the rest can be printed normally */ 
 void decode_IP_header(const u_char *packet){
-  //TODO:
+  //TODO: (packet[14])?
   printf("IP Packet Header::\n");
-
+  //Decode
+  
+  
+  //print
   //version 4 bits: IPv(4/6).
+  printf("Version: %b", (packet[14] >> 4));
   //Header length 4 bits: 4-byte words (default is 5)
+  printf("Header length:%b \n", packet[15]);
   //Type of service 8 bits: not generally used, usually set to all 0
   //Length 16bits. length of the payload in bytes
   //Identifier 16 bits: unique id each one. used for reassembley

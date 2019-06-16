@@ -1,4 +1,14 @@
 
+6/16
+    -Going to start testing my ARP decode/print. will need to refactor, becuase
+    	it looks pretty poorly done.
+    -Trying to figure out teh variable length on ARP. It says when it is Ethernet
+    	then the value is 6. Does this mean that Hardware address is depdent on hardware
+	type? Well when I write it, it seems obvious. But I don't see anywhere in the
+	text that explicity says that.
+    -Decoding ARP and the IP header. But in those methods I have p[14] and on
+        Also I am just decoding and printing on one line. I should seperate this
+
 6/15
     -Looks like 5.1a b, c, and d are all totally done. 
     -Printing in hex, also printing the type/length fields
