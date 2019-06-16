@@ -27,7 +27,7 @@ char cpre580f98[] = "netdump";//not sure yet
 //Helper method that prints out the type of the packet.
 void print_packet_header(const u_char* packet);
 void decode_ARP_packet(const u_char *packet);//6a
-void decode_IP_packet(const u_char *packet);//6b
+void decode_IP_header(const u_char *packet);//6b
 void decode_ICMP_header(const u_char *packet);//6c
 void raw_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p);
 
@@ -247,7 +247,7 @@ default_print(register const u_char *bp, register u_int length) {
 }
 
 /*
- * Print the packet header
+ * Print the ethernet header of the packet
  *
  */
 void print_packet_header(const u_char* packet){
@@ -279,6 +279,7 @@ void print_packet_header(const u_char* packet){
     else if(type_or_length == ARP){
       printf("Payload = ARP\n");
       num_arp_packets++;
+      //Call function that prints out ARP
     }else{
       printf("Payload is not yet mapped\n");
     }
@@ -308,22 +309,69 @@ void raw_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p) {
 
 /* Decode and print out the ARP Packet */
 void decode_ARP_packet(const u_char *packet){
+  //I think things start at p[14]?
   //ARP REPLY
 
   //ARP REQUEST
-
-  //print out in dat format that makes it most readable?
-  //what does that entail?
+  
+  //HW type (16bits): type of phy network ARP is used on. Ethernet = 1
+  //Protocol Type (16bits): IP has a value of 0x800
+  //HW Len (8bits): length of the hardware addres fields i the header. ethernet is 6
+  //protocol length (8bits): IPv4 has value of 4
+  //Operation(16bits):indicates whether a req or a reply
+  //     req = 1, reply = 2
+  //Sender HW addr (var): ethernet uses 6 bytes here
+  //Sender protocol addr(var): IPV4 uses 4 bytes
+  //Target HW add(var): Eth uses 6 bytes here. In ARP REQ this is all 0
+  //Target protocoladdr(var) IP address of the target. IPv4 uses 4 bytes
 }
 
 /* Decode and print out the IP Header, the rest can be printed normally */
-void decode_IP_packet(const u_char *packet){
-  //TODO: change name to *_header
+void decode_IP_header(const u_char *packet){
+  //TODO:
+  printf("IP Packet Header::\n");
+
+  //version 4 bits: IPv(4/6).
+  //Header length 4 bits: 4-byte words (default is 5)
+  //Type of service 8 bits: not generally used, usually set to all 0
+  //Length 16bits. length of the payload in bytes
+  //Identifier 16 bits: unique id each one. used for reassembley
+  //Flags 3 bits. first is reserved & set to 0.
+  //     2nd is D flag (don't fragment). 1 is don't frag.
+  //     3rd is M flag. (more). if 1 then there is another. if 0 then it's done
+  //offset(13bits): indicate where the frag should be placed in reassembly buffer
+  //TTL 8bits:
+  //Protocol 8bits: indicates upper layer protocol that will handle packet.
+  //     1 for ICMP, 6 for TCP, 17 for UDP
+  //checksum 16bits: used for err detections
+  //src IP addr (32 bits)
+  //dest IP add (32 bits)
+  //options (variable) 
+  //data (variable). 65,536 - header length. 
 }
 
 /* Decode and print out the ICMP */
 void decode_ICMP_header(const u_char *packet){
-  //TODO:change name to *_header
+  //TODO:
+  //starts after the IP header.
+  //Type (8bits)
+  //    0 -> Echo reply ||
+  //    3 -> Err, dest unreachable
+  //    5 -> Redirection
+  //    8 -> echo request
+  //   11 -> Time exceeded
+  //   13 -> Timestamp req
+  //   14 -> Timestampe reply
+  //    if type = 0 then ICMP ECHO REPLY
+  //Code(8bits)
+  //    0 -> Network-based redirect
+  //    1 -> host-based redirect
+  //    2 -> Network-based redirect of the type of service specified
+  //    3 -> Host-based redirect "
+  //Checksum(16bits)
+  //Parameter(32bits): depends on type
+  //info(32bits)
+  
 }
 
 
