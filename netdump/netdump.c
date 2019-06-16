@@ -26,11 +26,9 @@ char cpre580f98[] = "netdump";//not sure yet
 
 //Helper method that prints out the type of the packet.
 void print_packet_header(const u_char* packet);
-
-/*
-  A method header for printing the raw output. it takes a user, pcap packethandler
-  and a const char pointer p
-*/
+void decode_ARP_packet(const u_char *packet);//6a
+void decode_IP_packet(const u_char *packet);//6b
+void decode_ICMP_header(const u_char *packet);//6c
 void raw_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p);
 
 int packet_type; //ICMP(1), UDP(17), TCP(6) etc.
@@ -49,7 +47,7 @@ extern char *copy_argv(char **);
 int num_broadcast_packets = 0;
 int num_ip_packets = 0;
 int num_arp_packets = 0;
-
+int num_icmp_packets = 0;
 
 /* Length of saved portion of packet. */
 int snaplen = 1500;
@@ -186,7 +184,11 @@ void program_ending(int signo) {
 	    (void)fprintf(stderr, "Number of IP Packets = %d\n",
 			  num_ip_packets);
 	    (void)fprintf(stderr, "Number of ARP Packets = %d\n",
-			  num_arp_packets);    
+			  num_arp_packets);
+	    (void)fprintf(stderr, "Number of ICMP Packets = %d\n",
+			  num_icmp_packets);    
+
+	    
 	  }
 	}
 	exit(0);
@@ -300,9 +302,30 @@ void raw_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p) {
   print_packet_header(p);
   //Printing the packet
   default_print(p, caplen);
-  putchar('\n');
-  
-  
+  putchar('\n');  
   printf("\n\t ------------[END OF PACKET]------------\n");
 }
+
+/* Decode and print out the ARP Packet */
+void decode_ARP_packet(const u_char *packet){
+  //ARP REPLY
+
+  //ARP REQUEST
+
+  //print out in dat format that makes it most readable?
+  //what does that entail?
+}
+
+/* Decode and print out the IP Header, the rest can be printed normally */
+void decode_IP_packet(const u_char *packet){
+  //TODO: change name to *_header
+}
+
+/* Decode and print out the ICMP */
+void decode_ICMP_header(const u_char *packet){
+  //TODO:change name to *_header
+}
+
+
+
 
