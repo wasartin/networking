@@ -1,10 +1,7 @@
-l/*
+/*
  * Packet Sniffer 
  * ---------------
- * 
- * 
  */
-
 #define RETSIGTYPE void
 
 #include <sys/types.h>
@@ -186,9 +183,7 @@ void program_ending(int signo) {
 	    (void)fprintf(stderr, "Number of ARP Packets = %d\n",
 			  num_arp_packets);
 	    (void)fprintf(stderr, "Number of ICMP Packets = %d\n",
-			  num_icmp_packets);    
-
-	    
+			  num_icmp_packets);    	    
 	  }
 	}
 	exit(0);
@@ -272,15 +267,20 @@ void print_packet_header(const u_char* packet){
     uint16_t IP = 0x800;
     uint16_t ARP = 0x806;
     uint16_t IPv6 = 0x86DD;
+    /*
     if(type_or_length == IP){
       printf("Payload = IP\n");
       num_ip_packets++;
     }
-    else if(type_or_length == ARP){
+    */
+    if(type_or_length == ARP){
       printf("Payload = ARP\n");
       num_arp_packets++;
+      //first try putting the whole thing ing
+      decode_ARP_packet(packet);
       //Call function that prints out ARP
     }
+    /*
     else if(type_or_length == IPv6 ){
       printf("Payload = IPv6\n");
       //increment this?
@@ -288,6 +288,8 @@ void print_packet_header(const u_char* packet){
       printf("Payload is not yet mapped\n");
       //still don't know what 0x9000 is
     }
+    */
+    
   }else{
     printf("Length = %0d\n", packet[12]);
   }  
@@ -329,13 +331,13 @@ void decode_ARP_packet(const u_char *packet_data){
   u_char sender_hw_addr[hw_len];
   int h = 0;
   for(h = 0; h < hw_len; h++){
-    sender_hw_add[h] = packet_data[i++];
+    sender_hw_addr[h] = packet_data[i++];
   }
   //if IPv4, then it is 4 bytes, so IPv6 is 6 bytes?
   uint8_t sender_protocol_addr[protocol_len];
   int p = 0;
   for(p = 0; p < protocol_len; p++){
-    sender_protocol_add[p] = packet_data[i++];
+    sender_protocol_addr[p] = packet_data[i++];
   }
   u_char target_hw_addr[hw_len];
   for(h = 0; h < hw_len; h++){
@@ -392,8 +394,7 @@ void decode_IP_header(const u_char *packet){
   //TODO: (packet[14])?
   printf("IP Packet Header::\n");
   //Decode
-  
-  
+ 
   //print
   //version 4 bits: IPv(4/6).
   printf("Version: %b", (packet[14] >> 4));
