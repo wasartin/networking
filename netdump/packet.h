@@ -1,41 +1,51 @@
 #ifndef PACKET_H
-# define PACKET_H
+# define PACKET_T
 
 #include <stdio.h>
-#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 
-/* Define common numbers here*/
+/*CONSTANTS */
+#define ADDR_LENGTH 6
+#define ARP_REQUEST 1
+#define ARP_REPLY 2
+
+/* Used to keep information about the current Session*/
+typedef struct{
+  int broadcast_packets_total;
+  int ip_packets_total;
+  int arp_packets_total;
+  int icmp_packets_total;  
+}Session;
+
+extern Session currSession;
 
 typedef struct{
-  const u_char *raw_data;
-  u_char *dest_addr;
-  u_char *src_addr;
-}Info;
+  u_char *raw_data;
+  u_int length;
+  u_int caplen;
+  u_char dest_addr[ADDR_LENGTH];
+  u_char src_addr[ADDR_LENGTH];
+  uint16_t type_length;
+}Packet;
 
 typedef struct{
-  Info contents;
+  Packet info;
   uint16_t hw_type;
   uint16_t protocol_type;
   uint8_t hw_len;
   uint8_t protocol_len;
-  uint16_t operation;
-  //Don't know if I can do the others yet
+  uint16_t operation; //if 1 then 
 }ARP;
 
-typedef struct{
-  //version
-  //header length
-  uint8_t type_of_service;
-  uint8_t length;
-  uint16_t identifier;
-  uint8_t TTL;
-  uint8_t protocol;
-  uint16_t checksum;
-  uint32_t src_ip_addr;
-  uint32_t dest_ip_addr;
-  //options
-  //data
-}IP;
+void set_header(Packet *packet);
+void print_packet(Packet *packet);
+
+void print_packet_header(u_char *packet);
+void decode_ARP_packet(const u_char *packet_data);//6a
+void decode_IP_header(const u_char *packet);//6b
+void decde_ICMP_header(const u_char *packet);//6c
+
 
 
 #endif

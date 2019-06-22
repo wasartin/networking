@@ -14,18 +14,18 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "packet.h"
 #ifndef setsignal_h
 #define setsignal_h
 
 RETSIGTYPE (*setsignal(int, RETSIGTYPE (*)(int)))(int);
 #endif
+
+//My global variable. Nothing could go here.
+Session currSession = {0, 0, 0, 0};
+
 char cpre580f98[] = "netdump";//not sure yet
 
-//Helper method that prints out the type of the packet.
-void print_packet_header(const u_char* packet);
-void decode_ARP_packet(const u_char *packet);//6a
-void decode_IP_header(const u_char *packet);//6b
-void decode_ICMP_header(const u_char *packet);//6c
 void raw_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p);
 
 int packet_type; //ICMP(1), UDP(17), TCP(6) etc.
@@ -37,14 +37,8 @@ extern void bpf_dump(const struct bpf_program *, int); //Berkey packet Filter
 
 extern char *copy_argv(char **);
 
-/* Forwards */
- void program_ending(int);
-
-/* Global Variables And Declarations */
-int num_broadcast_packets = 0;
-int num_ip_packets = 0;
-int num_arp_packets = 0;
-int num_icmp_packets = 0;
+// Forwards //Edited THis, added the session struct
+void program_ending(Session session, int);
 
 /* Length of saved portion of packet. */
 int snaplen = 1500;
@@ -177,13 +171,13 @@ void program_ending(int signo) {
 			  stat.ps_drop);
 	    
 	    (void)fprintf(stderr, "Number of Broadcast Packets = %d\n",
-			  num_broadcast_packets);
+			  currSession.broadcast_packets_total);
 	    (void)fprintf(stderr, "Number of IP Packets = %d\n",
-			  num_ip_packets);
+			  currSession_ip_packets_total);
 	    (void)fprintf(stderr, "Number of ARP Packets = %d\n",
-			  num_arp_packets);
+			  currSession_arp_packets_total);
 	    (void)fprintf(stderr, "Number of ICMP Packets = %d\n",
-			  num_icmp_packets);    	    
+			  currSession_icmp_packets_total);    	    
 	  }
 	}
 	exit(0);
@@ -250,33 +244,61 @@ void raw_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p) {
   u_int length = h->len;
   u_int caplen = h->caplen; //the length of the ethernet packet
 
-  printf("\n\t +++++++++++[START OF PACKET]+++++++++++\n");
-    
+
+  Packet currPacket;
+  currPacket.raw_data = (u_char*)malloc(caplen * sizeof(p));
+  currPacket.length = length;
+  currPacket.caplen = caplen;
+  int iter = 0;
+  for(iter = 0; iter < caplen; iter++){
+    currPacket.raw_data[iter] = p[iter];
+  }
+  set_header(&currPacket);
+  
+  printf("\n\t +++++++++++[START OF DECODE]+++++++++++\n");
+
+  
   print_packet_header(p);
   //Printing the packet
+  printf("\n\t -------[END OF DECODE]-------\n");
+  printf("\n\t +++++++++++[RAW DATA]+++++++++++\n");
   default_print(p, caplen);
   putchar('\n');  
-  printf("\n\t ------------[END OF PACKET]------------\n");
+  printf("\n\t ------------[END OF DATA]------------\n");
+  free(currPacket.raw_data);
 }
 
+/*
+void set_header(Packet *packet){
+  int i = 0;
+  int length_of_address = 6;
+  for(i = 0; i< length_of_address; i++){
+    packet->dest_addr[i] = packet->raw_data[i];
+  }
+  for(i=0; i<length_of_address; i++){
+    packet->src_addr[i] = packet->raw_data[i];
+  }
+
+  packet->type_length = packet[i++]*256 + packet[i++];
+
+  
+}
+*/
 
 /*
  * Print the ethernet header of the packet
  *
- */
-void print_packet_header(const u_char* packet){
+
+void print_packet_header(u_char *packet){
   num_broadcast_packets++;
   char *PACKET_PRINT_FORMAT_IPV6 = "%s = %02x:%02x:%02x:%02x:%02x:%02x\n";
   int i = 0;
-  /*Print the Addresses */
   char *dst_addr = "DEST Address";
   char *src_addr = "SRC Address ";
   printf(PACKET_PRINT_FORMAT_IPV6, dst_addr, packet[i++], packet[i++],\
 	 packet[i++], packet[i++], packet[i++], packet[i++]);
   printf(PACKET_PRINT_FORMAT_IPV6, src_addr, packet[6], packet[7],\
 	 packet[i++], packet[i++], packet[i++], packet[i++]);
-
-  /*Print the Type/Length field */
   //If the Type/Length field is at least 1536 (0x600) then it is a protocol type.
   //Otherwise it is a length
   uint16_t type_or_length = packet[i++]*256 + packet[i++];
@@ -289,12 +311,12 @@ void print_packet_header(const u_char* packet){
     uint16_t IP = 0x800;
     uint16_t ARP = 0x806;
     uint16_t IPv6 = 0x86DD;
-    /*
-    if(type_or_length == IP){
-      printf("Payload = IP\n");
-      num_ip_packets++;
-    }
-    */
+   
+   // if(type_or_length == IP){
+     // printf("Payload = IP\n");
+     // num_ip_packets++;
+   // }
+    
     if(type_or_length == ARP){
       printf("Payload = ARP\n");
       num_arp_packets++;
@@ -302,19 +324,23 @@ void print_packet_header(const u_char* packet){
       decode_ARP_packet(packet);
       //Call function that prints out ARP
     }
-    /*
-    else if(type_or_length == IPv6 ){
-      printf("Payload = IPv6\n");
+    
+    // else if(type_or_length == IPv6 ){
+    // printf("Payload = IPv6\n");
       //increment this?
-    }else{
-      printf("Payload is not yet mapped\n");
+    // }else{
+    // printf("Payload is not yet mapped\n");
       //still don't know what 0x9000 is
+      //0x7bda,
+      //0x2715, 
+      //0x1baa,
+      //0x1856,
     }
-    */
+   
   }  
 }
-
-/* Decode and print out the ARP Packet */
+*/
+/* 
 void decode_ARP_packet(const u_char *packet_data){
   //I think things start at p[14]?
   printf("Arp Packet");
@@ -358,14 +384,10 @@ void decode_ARP_packet(const u_char *packet_data){
     printf("ARP Request\n");
   }
   else if(operation == 2){
-    printf("ARP Request\n");
+    printf("ARP Reply\n");
   }else {
     printf("Error : Unknown Arp Operation");
   }
-  //This is where things can get weird. Got to print out all the things with
-  //  variables lengths. This would probably be better to put into a method
-  //IPv4 does xxx.xxx.xxx.xxx. || IPv6 does xx:xx:xx:xx:
-  //Hardware addresses use the :, but I will diff between IPv later.
   printf("Sender Hardware Address: ");
   for(h = 0; h < hw_len; h++){//There has to be a better way to do this
     printf("%02x", sender_hw_addr[h]);
@@ -388,59 +410,4 @@ void decode_ARP_packet(const u_char *packet_data){
   }
   
 }
-
-/* Decode and print out the IP Header, the rest can be printed normally */ 
-void decode_IP_header(const u_char *packet){
-  //TODO: (packet[14])?
-  printf("IP Packet Header::\n");
-  //Decode
- 
-  //print
-  //version 4 bits: IPv(4/6).
-  printf("Version: %b", (packet[14] >> 4));
-  //Header length 4 bits: 4-byte words (default is 5)
-  printf("Header length:%b \n", packet[15]);
-  //Type of service 8 bits: not generally used, usually set to all 0
-  //Length 16bits. length of the payload in bytes
-  //Identifier 16 bits: unique id each one. used for reassembley
-  //Flags 3 bits. first is reserved & set to 0.
-  //     2nd is D flag (don't fragment). 1 is don't frag.
-  //     3rd is M flag. (more). if 1 then there is another. if 0 then it's done
-  //offset(13bits): indicate where the frag should be placed in reassembly buffer
-  //TTL 8bits:
-  //Protocol 8bits: indicates upper layer protocol that will handle packet.
-  //     1 for ICMP, 6 for TCP, 17 for UDP
-  //checksum 16bits: used for err detections
-  //src IP addr (32 bits)
-  //dest IP add (32 bits)
-  //options (variable) 
-  //data (variable). 65,536 - header length. 
-}
-
-/* Decode and print out the ICMP */
-void decode_ICMP_header(const u_char *packet){
-  //TODO:
-  //starts after the IP header.
-  //Type (8bits)
-  //    0 -> Echo reply ||
-  //    3 -> Err, dest unreachable
-  //    5 -> Redirection
-  //    8 -> echo request
-  //   11 -> Time exceeded
-  //   13 -> Timestamp req
-  //   14 -> Timestampe reply
-  //    if type = 0 then ICMP ECHO REPLY
-  //Code(8bits)
-  //    0 -> Network-based redirect
-  //    1 -> host-based redirect
-  //    2 -> Network-based redirect of the type of service specified
-  //    3 -> Host-based redirect "
-  //Checksum(16bits)
-  //Parameter(32bits): depends on type
-  //info(32bits)
-  
-}
-
-
-
-
+*/
