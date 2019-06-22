@@ -241,27 +241,49 @@ void default_print(register const u_char *bp, register u_int length) {
 }
 
 /*
+ * This is used as the callback function for pcap_loop. 
+ * it is called every time a packet is received. 
+ * caplen is the length of the ethernet packet
+ * character array p, which is the packet p[0] DEST hardware address
+ */
+void raw_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p) {
+  u_int length = h->len;
+  u_int caplen = h->caplen; //the length of the ethernet packet
+
+  printf("\n\t +++++++++++[START OF PACKET]+++++++++++\n");
+    
+  print_packet_header(p);
+  //Printing the packet
+  default_print(p, caplen);
+  putchar('\n');  
+  printf("\n\t ------------[END OF PACKET]------------\n");
+}
+
+
+/*
  * Print the ethernet header of the packet
  *
  */
 void print_packet_header(const u_char* packet){
   num_broadcast_packets++;
   char *PACKET_PRINT_FORMAT_IPV6 = "%s = %02x:%02x:%02x:%02x:%02x:%02x\n";
- 
+  int i = 0;
   /*Print the Addresses */
   char *dst_addr = "DEST Address";
   char *src_addr = "SRC Address ";
-  printf(PACKET_PRINT_FORMAT_IPV6, dst_addr, packet[0], packet[1],\
-	 packet[2], packet[3], packet[4], packet[5]);
+  printf(PACKET_PRINT_FORMAT_IPV6, dst_addr, packet[i++], packet[i++],\
+	 packet[i++], packet[i++], packet[i++], packet[i++]);
   printf(PACKET_PRINT_FORMAT_IPV6, src_addr, packet[6], packet[7],\
-	 packet[8], packet[9], packet[10], packet[11]);
+	 packet[i++], packet[i++], packet[i++], packet[i++]);
 
   /*Print the Type/Length field */
   //If the Type/Length field is at least 1536 (0x600) then it is a protocol type.
   //Otherwise it is a length
-  uint16_t type_or_length = packet[12]*256 + packet[13];
+  uint16_t type_or_length = packet[i++]*256 + packet[i++];
   uint16_t cut_off = 0x0600;
-  if(type_or_length >= cut_off){
+  if(type_or_length < cut_off){
+    printf("Length = %0d\n", packet[12]);    
+  }else{//Protocol Type
     printf("Type = 0x%04x, ", type_or_length);
     
     uint16_t IP = 0x800;
@@ -289,29 +311,7 @@ void print_packet_header(const u_char* packet){
       //still don't know what 0x9000 is
     }
     */
-    
-  }else{
-    printf("Length = %0d\n", packet[12]);
   }  
-}
-
-/*
- * This is used as the callback function for pcap_loop. 
- * it is called every time a packet is received. 
- * caplen is the length of the ethernet packet
- * character array p, which is the packet p[0] DEST hardware address
- */
-void raw_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p) {
-  u_int length = h->len;
-  u_int caplen = h->caplen; //the length of the ethernet packet
-
-  printf("\n\t +++++++++++[START OF PACKET]+++++++++++\n");
-    
-  print_packet_header(p);
-  //Printing the packet
-  default_print(p, caplen);
-  putchar('\n');  
-  printf("\n\t ------------[END OF PACKET]------------\n");
 }
 
 /* Decode and print out the ARP Packet */

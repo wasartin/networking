@@ -1,4 +1,7 @@
 
+
+6/22
+    -Got tired of the numbers, started doing indexes on the packet incrementer
 6/16
     -Have lot of stuff commented out to just work on ARP packets. Will finish
        ARP tomorrow
