@@ -21,9 +21,6 @@
 RETSIGTYPE (*setsignal(int, RETSIGTYPE (*)(int)))(int);
 #endif
 
-//My global variable. Nothing could go here.
-Session currSession = {0, 0, 0, 0};
-
 char cpre580f98[] = "netdump";//not sure yet
 
 void raw_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p);
@@ -62,7 +59,7 @@ int main(int argc, char **argv) {
 	int run_ad_infinitum = -1;
 	cnt = run_ad_infinitum;
 	device = NULL;
-	
+
 	if ((cp = strrchr(argv[0], '/')) != NULL)
 		program_name = cp + 1;
 	else
@@ -243,25 +240,10 @@ void default_print(register const u_char *bp, register u_int length) {
 void raw_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p) {
   u_int length = h->len;
   u_int caplen = h->caplen; //the length of the ethernet packet
-  printf("Length: %d\n", length);
-  printf("Cap Length: %d\n", caplen);
-    
-  Packet currPacket;
-  // currPacket.raw_data = (u_char*)malloc(caplen * sizeof(u_char));
-  currPacket.length = length;
-  currPacket.caplen = caplen;
-
-  currPacket.raw_data = p;
-  printf("P first two bytes %02x:%02x.\n", p[0], p[1]);
-  printf("O first two bytes %02x:%02x.\n", currPacket.raw_data[0], currPacket.raw_data[1]);
 
   printf("\n\t -----------[START OF DECODE]------------\n");
-  set_header(&currPacket);
   
-  //printf("\n\t +++++++++++[START OF DECODE]+++++++++++\n");
-  print_packet(&currPacket);
-  
-  //  print_packet_header(p);
+  print_packet_header(p);
   printf("\n\t -------[END OF DECODE]-------\n");
   printf("\n\t -----------[START OF RAW DATA]-----------\n");
   default_print(p, caplen);
@@ -269,3 +251,5 @@ void raw_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p) {
   printf("\n\t ------------[END OF RAW DATA]------------\n");
   //  free(currPacket.raw_data);
 }
+
+

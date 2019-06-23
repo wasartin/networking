@@ -19,8 +19,6 @@ typedef struct{
   int icmp_packets_total;  
 }Session;
 
-extern Session currSession;
-
 typedef struct{
   u_char *raw_data;
   u_int length;
@@ -39,14 +37,9 @@ typedef struct{
   uint16_t operation; //if 1 then 
 }ARP;
 
-void set_header(Packet *packet);
-void print_packet(Packet *packet);
-
 void print_packet_header(const u_char *packet);
 void decode_ARP_packet(const u_char *packet_data);//6a
 void decode_IP_header(const u_char *packet);//6b
 void decde_ICMP_header(const u_char *packet);//6c
-
-
 
 #endif
