@@ -193,12 +193,46 @@ void decode_IP_header(const u_char *packet){
 
   //TODO figure out the length part
   //options (variable)                                                                              
-  //data (variable). 65,536 - header length.  
+  //data (variable). 65,536 - header length.
+
+  //TODO: Call ICMP Header
+
+  
 }
 
+  //only give this packet the portion it needs
 void decde_ICMP_header(const u_char *packet){
-  //TODO:                                                                                           
+  //TODO:
+  printf("ICMP::\n");
   //starts after the IP header.                                                                     
+  uint8_t type = packet[0];
+  uint8_t code = packet[1];
+  
+  printf("Type: %u, Code: %u", type, code);
+  if(type == 0 && code == 0){
+    printf("\tICMP ECHO Reply\n");
+  }
+  else if(type == 8 && code == 0){
+    printf("\tICMP ECHO Request\n");
+  }
+  else if(type == 14 && code ==0){
+    printf("\tTimestamp reply\n");
+  }
+  else if(type == 3 && (code > 0 && code <= 15)){
+    printf("\tDest unreachable\n");
+  }
+  else if(type == 11 && code <= 1){
+    printf("\tTime exeeced\n");
+  }
+  else if(type == 5 & code <= 3){
+    printf("Redirection\n");
+  }else{
+    printf("Don't know yet\n");
+  }
+  
+  uint16_t checksum = packet[2] * 256 + packet[3];
+  printf("Checksum: %u\n", checksum);
+  
   //Type (8bits)                                                                                    
   //    0 -> Echo reply ||                                                                          
   //    3 -> Err, dest unreachable                                                                  
@@ -213,9 +247,7 @@ void decde_ICMP_header(const u_char *packet){
   //    1 -> host-based redirect                                                                    
   //    2 -> Network-based redirect of the type of service specified                                
   //    3 -> Host-based redirect "                                                                  
-  //Checksum(16bits)                                                                                
-  //Parameter(32bits): depends on type                                                              
-  //info(32bits)                                                                                    
+  //TODO: Figure out rest & timestamp                                                                        
                       
 }
 
