@@ -46,7 +46,7 @@ extern int optind;
 extern int opterr;
 extern char *optarg;
 int pflag = 0, aflag = 0;
-
+Session currSession;
 int main(int argc, char **argv) {
 	int cnt, op, i, done = 0;
 	bpf_u_int32 localnet, netmask;
@@ -59,7 +59,10 @@ int main(int argc, char **argv) {
 	int run_ad_infinitum = -1;
 	cnt = run_ad_infinitum;
 	device = NULL;
-
+	currSession.broadcast_packets_total = 0;
+	currSession.ip_packets_total = 0;
+	currSession.arp_packets_total = 0;
+	
 	if ((cp = strrchr(argv[0], '/')) != NULL)
 		program_name = cp + 1;
 	else
@@ -143,11 +146,6 @@ int main(int argc, char **argv) {
 	  exit(1);
 	}
 	pcap_close(pd);
-
-	/** TODO: DELETE THIS. THIS IS ONLY HERE FOR DEBUGGING SMALL RUNS */
-	//printf("Number of Broadcast packets received = %d\n", num_broadcast_packets);
-	//printf("Number of IP packets received = %d\n", num_ip_packets);
-	//printf("Number of ARP packets received = %d\n", num_arp_packets);
 	exit(0);
 }
 
@@ -241,8 +239,7 @@ void raw_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p) {
   u_int length = h->len;
   u_int caplen = h->caplen; //the length of the ethernet packet
 
-  printf("\n\t -----------[START OF DECODE]------------\n");
-  
+  printf("\n\t -----------[START OF DECODE]------------\n");  
   print_packet_header(p);
   printf("\n\t -------[END OF DECODE]-------\n");
   printf("\n\t -----------[START OF RAW DATA]-----------\n");

@@ -1,5 +1,5 @@
 #ifndef PACKET_H
-# define PACKET_T
+# define PACKET_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,7 +10,6 @@
 #define ADDR_LENGTH 6
 #define ARP_REQUEST 1
 #define ARP_REPLY 2
-
 /* Used to keep information about the current Session*/
 typedef struct{
   int broadcast_packets_total;
@@ -18,6 +17,8 @@ typedef struct{
   int arp_packets_total;
   int icmp_packets_total;  
 }Session;
+
+extern Session currSession;
 
 typedef struct{
   u_char *raw_data;
@@ -40,6 +41,6 @@ typedef struct{
 void print_packet_header(const u_char *packet);
 void decode_ARP_packet(const u_char *packet_data);//6a
 void decode_IP_header(const u_char *packet);//6b
-void decde_ICMP_header(const u_char *packet);//6c
+void decode_ICMP_header(const u_char *packet);//6c
 
 #endif
