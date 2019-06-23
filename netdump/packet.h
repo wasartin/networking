@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
 /*CONSTANTS */
 #define ADDR_LENGTH 6
@@ -41,7 +42,7 @@ typedef struct{
 void set_header(Packet *packet);
 void print_packet(Packet *packet);
 
-void print_packet_header(u_char *packet);
+void print_packet_header(const u_char *packet);
 void decode_ARP_packet(const u_char *packet_data);//6a
 void decode_IP_header(const u_char *packet);//6b
 void decde_ICMP_header(const u_char *packet);//6c

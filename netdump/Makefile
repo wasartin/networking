@@ -17,7 +17,7 @@ LIBS = -lpcap
 	$(CC) $(CFLAGS) -c ./$*.c
 
 CSRC =	netdump.c  \
-	util.c setsignal.c
+	packet.c util.c setsignal.c
 
 SRC =	$(CSRC) $(LOCALSRC)
 

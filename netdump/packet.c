@@ -11,9 +11,7 @@ void set_header(Packet *packet){
   for(i=0; i<length_of_address; i++){                                                               
     packet->src_addr[i] = packet->raw_data[i];                                                      
   }                                                                                                 
-                                                                                                    
-  packet->type_length = packet[i++]*256 + packet[i++];                                              
-         
+  packet->type_length = packet->raw_data[i++]*256 + packet->raw_data[i++];     
 }
 
 //Hope to just have this
@@ -21,18 +19,18 @@ void print_packet(Packet *packet){
 
 }
 
-void print_packet_header(u_char *packet){
+void print_packet_header(const u_char *packet){
 
-  num_broadcast_packets++;                                                                          
+  currSession.broadcast_packets_total++;                                                              
   char *PACKET_PRINT_FORMAT_IPV6 = "%s = %02x:%02x:%02x:%02x:%02x:%02x\n";                          
   int i = 0;                                                                                        
   /*Print the Addresses */                                                                          
   char *dst_addr = "DEST Address";                                                                  
   char *src_addr = "SRC Address ";                                                                  
-  printf(PACKET_PRINT_FORMAT_IPV6, dst_addr, packet[i++], packet[i++],\                             
-         packet[i++], packet[i++], packet[i++], packet[i++]);                                       
-  printf(PACKET_PRINT_FORMAT_IPV6, src_addr, packet[6], packet[7],\                                 
-         packet[i++], packet[i++], packet[i++], packet[i++]);                                       
+  printf(PACKET_PRINT_FORMAT_IPV6, dst_addr, packet[i++], packet[i++],
+	 packet[i++], packet[i++], packet[i++], packet[i++]);                                       
+  printf(PACKET_PRINT_FORMAT_IPV6, src_addr, packet[6], packet[7],
+	 packet[i++], packet[i++], packet[i++], packet[i++]);                                       
                                                                                                     
   /*Print the Type/Length field */                                                                  
   //If the Type/Length field is at least 1536 (0x600) then it is a protocol type.                   

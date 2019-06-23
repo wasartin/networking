@@ -38,7 +38,7 @@ extern void bpf_dump(const struct bpf_program *, int); //Berkey packet Filter
 extern char *copy_argv(char **);
 
 // Forwards //Edited THis, added the session struct
-void program_ending(Session session, int);
+void program_ending(int);
 
 /* Length of saved portion of packet. */
 int snaplen = 1500;
@@ -173,11 +173,11 @@ void program_ending(int signo) {
 	    (void)fprintf(stderr, "Number of Broadcast Packets = %d\n",
 			  currSession.broadcast_packets_total);
 	    (void)fprintf(stderr, "Number of IP Packets = %d\n",
-			  currSession_ip_packets_total);
+			  currSession.ip_packets_total);
 	    (void)fprintf(stderr, "Number of ARP Packets = %d\n",
-			  currSession_arp_packets_total);
+			  currSession.arp_packets_total);
 	    (void)fprintf(stderr, "Number of ICMP Packets = %d\n",
-			  currSession_icmp_packets_total);    	    
+			  currSession.icmp_packets_total);    	    
 	  }
 	}
 	exit(0);
@@ -267,147 +267,3 @@ void raw_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p) {
   printf("\n\t ------------[END OF DATA]------------\n");
   free(currPacket.raw_data);
 }
-
-/*
-void set_header(Packet *packet){
-  int i = 0;
-  int length_of_address = 6;
-  for(i = 0; i< length_of_address; i++){
-    packet->dest_addr[i] = packet->raw_data[i];
-  }
-  for(i=0; i<length_of_address; i++){
-    packet->src_addr[i] = packet->raw_data[i];
-  }
-
-  packet->type_length = packet[i++]*256 + packet[i++];
-
-  
-}
-*/
-
-/*
- * Print the ethernet header of the packet
- *
-
-void print_packet_header(u_char *packet){
-  num_broadcast_packets++;
-  char *PACKET_PRINT_FORMAT_IPV6 = "%s = %02x:%02x:%02x:%02x:%02x:%02x\n";
-  int i = 0;
-  char *dst_addr = "DEST Address";
-  char *src_addr = "SRC Address ";
-  printf(PACKET_PRINT_FORMAT_IPV6, dst_addr, packet[i++], packet[i++],\
-	 packet[i++], packet[i++], packet[i++], packet[i++]);
-  printf(PACKET_PRINT_FORMAT_IPV6, src_addr, packet[6], packet[7],\
-	 packet[i++], packet[i++], packet[i++], packet[i++]);
-  //If the Type/Length field is at least 1536 (0x600) then it is a protocol type.
-  //Otherwise it is a length
-  uint16_t type_or_length = packet[i++]*256 + packet[i++];
-  uint16_t cut_off = 0x0600;
-  if(type_or_length < cut_off){
-    printf("Length = %0d\n", packet[12]);    
-  }else{//Protocol Type
-    printf("Type = 0x%04x, ", type_or_length);
-    
-    uint16_t IP = 0x800;
-    uint16_t ARP = 0x806;
-    uint16_t IPv6 = 0x86DD;
-   
-   // if(type_or_length == IP){
-     // printf("Payload = IP\n");
-     // num_ip_packets++;
-   // }
-    
-    if(type_or_length == ARP){
-      printf("Payload = ARP\n");
-      num_arp_packets++;
-      //first try putting the whole thing ing
-      decode_ARP_packet(packet);
-      //Call function that prints out ARP
-    }
-    
-    // else if(type_or_length == IPv6 ){
-    // printf("Payload = IPv6\n");
-      //increment this?
-    // }else{
-    // printf("Payload is not yet mapped\n");
-      //still don't know what 0x9000 is
-      //0x7bda,
-      //0x2715, 
-      //0x1baa,
-      //0x1856,
-    }
-   
-  }  
-}
-*/
-/* 
-void decode_ARP_packet(const u_char *packet_data){
-  //I think things start at p[14]?
-  printf("Arp Packet");
-  //ARP REPLY
-  //ARP REQUEST
-  int i = 14;
-  
-  uint16_t hw_type = packet_data[i++] * 256 + packet_data[i++];
-  uint16_t protocol_type = packet_data[i++] * packet_data[i++];
-  uint8_t hw_len = packet_data[i++];
-  uint8_t protocol_len = packet_data[i++];
-  uint16_t operation = packet_data[i++] * 256 + packet_data[i++];
-
-  u_char sender_hw_addr[hw_len];
-  int h = 0;
-  for(h = 0; h < hw_len; h++){
-    sender_hw_addr[h] = packet_data[i++];
-  }
-  //if IPv4, then it is 4 bytes, so IPv6 is 6 bytes?
-  uint8_t sender_protocol_addr[protocol_len];
-  int p = 0;
-  for(p = 0; p < protocol_len; p++){
-    sender_protocol_addr[p] = packet_data[i++];
-  }
-  u_char target_hw_addr[hw_len];
-  for(h = 0; h < hw_len; h++){
-    target_hw_addr[h] = packet_data[i++];
-  }
-  uint8_t target_protocol_addr[protocol_len];
-  for(p = 0; p < protocol_len; p++){
-    target_protocol_addr[p] = packet_data[i++];
-  }
-  
-  
-  printf("Hardware type: %u\n", hw_type);
-  printf("Protocol Type: %u\n", protocol_type);
-  printf("Hardware Length: %d", hw_len);
-  printf("Protocol Length: %d\n", protocol_len);
-  printf("Operation: %u\n", operation);
-  if(operation == 1){
-    printf("ARP Request\n");
-  }
-  else if(operation == 2){
-    printf("ARP Reply\n");
-  }else {
-    printf("Error : Unknown Arp Operation");
-  }
-  printf("Sender Hardware Address: ");
-  for(h = 0; h < hw_len; h++){//There has to be a better way to do this
-    printf("%02x", sender_hw_addr[h]);
-    printf((h + 1 < hw_len)? ":" : "\n");
-  }
-  printf("Sender Protocol Address: ");//TODO: Look in printing diff of IPv4/6
-  for(p = 0; p < protocol_len; p++){
-    printf("%d", sender_protocol_addr[p]);
-    printf((p + 1 < protocol_len)? "." : "\n");
-  }
-  printf("Target Hardware Address: ");
-  for(h = 0; h < hw_len; h++){
-    printf("%02x", target_hw_addr[h]);
-    printf((h + 1 < hw_len)? ":" : "\n");
-  }
-  printf("Target Protocol Address: ");
-  for(p = 0; p < protocol_len; p++){
-    printf("%d", target_protocol_addr[p]);//TODO: Look in printing diff of IPv4/6
-    printf((p + 1 < protocol_len)? "." : "\n");
-  }
-  
-}
-*/
