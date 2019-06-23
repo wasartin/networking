@@ -243,27 +243,29 @@ void default_print(register const u_char *bp, register u_int length) {
 void raw_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p) {
   u_int length = h->len;
   u_int caplen = h->caplen; //the length of the ethernet packet
-
-
+  printf("Length: %d\n", length);
+  printf("Cap Length: %d\n", caplen);
+    
   Packet currPacket;
-  currPacket.raw_data = (u_char*)malloc(caplen * sizeof(p));
+  // currPacket.raw_data = (u_char*)malloc(caplen * sizeof(u_char));
   currPacket.length = length;
   currPacket.caplen = caplen;
-  int iter = 0;
-  for(iter = 0; iter < caplen; iter++){
-    currPacket.raw_data[iter] = p[iter];
-  }
+
+  currPacket.raw_data = p;
+  printf("P first two bytes %02x:%02x.\n", p[0], p[1]);
+  printf("O first two bytes %02x:%02x.\n", currPacket.raw_data[0], currPacket.raw_data[1]);
+
+  printf("\n\t -----------[START OF DECODE]------------\n");
   set_header(&currPacket);
   
-  printf("\n\t +++++++++++[START OF DECODE]+++++++++++\n");
-
+  //printf("\n\t +++++++++++[START OF DECODE]+++++++++++\n");
+  print_packet(&currPacket);
   
-  print_packet_header(p);
-  //Printing the packet
+  //  print_packet_header(p);
   printf("\n\t -------[END OF DECODE]-------\n");
-  printf("\n\t +++++++++++[RAW DATA]+++++++++++\n");
+  printf("\n\t -----------[START OF RAW DATA]-----------\n");
   default_print(p, caplen);
   putchar('\n');  
-  printf("\n\t ------------[END OF DATA]------------\n");
-  free(currPacket.raw_data);
+  printf("\n\t ------------[END OF RAW DATA]------------\n");
+  //  free(currPacket.raw_data);
 }

@@ -15,7 +15,50 @@ void set_header(Packet *packet){
 }
 
 //Hope to just have this
-void print_packet(Packet *packet){
+void print_packet(Packet *packet){  
+  int i = 0;                                                                                        
+  /*Print the Addresses */                                                                        
+  printf("Dest Address = ");
+  for(i = 0; i < 6; i++){
+    printf("%02x", packet->dest_addr[i]);
+    printf((i + 1 < 6)? ":" : "\n");
+  }                               
+  printf("Src Address = ");
+  for(i = 0; i < 6; i++){
+    printf("%02x", packet->src_addr[i]);
+    printf((i + 1 < 6)? ":" : "\n");
+  }
+                                                                       
+  uint16_t cut_off = 0x0600;                                                                        
+  if(packet->type_length < cut_off){                               
+    printf("Length = %0d\n", packet->type_length);        
+  }else{//Protocol Type                                                                             
+    printf("Type = 0x%04x, ", packet->type_length);                       
+               
+    uint16_t IP = 0x800;                                                                            
+    uint16_t ARP = 0x806;                                                                           
+    uint16_t IPv6 = 0x86DD;                                                                          
+    if(packet->type_length == IP){     
+      printf("Payload = IP\n");                                                                     
+      currSession.ip_packets_total++;                   
+    }                                                                                               
+    if(packet->type_length == ARP){    
+      printf("Payload = ARP\n");                                                                    
+      currSession.arp_packets_total++;       
+      decode_ARP_packet(packet->raw_data);             
+    }                                                                                               
+    else if(packet->type_length == IPv6 ){
+      printf("Payload = IPv6\n");                                                                   
+      //increment this?                                                                             
+    }else{                                                                                          
+      printf("Payload is not yet mapped\n");                                                        
+      //still don't know what 0x9000 is                                                             
+      //0x7bda,                                                                                     
+      //0x2715,                                                                                     
+      //0x1baa,                                                                                     
+      //0x1856,                                                                                     
+    }                                                                                               
+  }
 
 }
 
@@ -42,7 +85,7 @@ void print_packet_header(const u_char *packet){
   }else{//Protocol Type                                                                             
     printf("Type = 0x%04x, ", type_or_length);                                                      
            
-  uint16_t IP = 0x800;                                                                            
+    uint16_t IP = 0x800;                                                                            
     uint16_t ARP = 0x806;                                                                           
     uint16_t IPv6 = 0x86DD;                                                                         
     /*                                                                                              
@@ -82,14 +125,14 @@ void decode_ARP_packet(const u_char *packet_data){
   int i = 14;                                                                                       
                                                                                                     
   uint16_t hw_type = packet_data[i++] * 256 + packet_data[i++];                                     
-  uint16_t protocol_type = packet_data[i++] * packet_data[i++];                                     
+  uint16_t protocol_type = packet_data[i++] *256 + packet_data[i++];
   uint8_t hw_len = packet_data[i++];                                                                
   uint8_t protocol_len = packet_data[i++];                                                          
   uint16_t operation = packet_data[i++] * 256 + packet_data[i++];                                   
                
   u_char sender_hw_addr[hw_len];                                                                    
   int h = 0;                                                                                        
-  for(h = 0; h < hw_len; h++){                                                                      
+  for(h = 0; h < hw_len; h++){                                          
     sender_hw_addr[h] = packet_data[i++];                                                           
   }                                                                                                 
   //if IPv4, then it is 4 bytes, so IPv6 is 6 bytes?                                                
@@ -107,7 +150,6 @@ void decode_ARP_packet(const u_char *packet_data){
     target_protocol_addr[p] = packet_data[i++];                                                     
   }                                                                                                 
                                                                                                     
-                       
   printf("Hardware type: %u\n", hw_type);                                                           
   printf("Protocol Type: %u\n", protocol_type);                                                     
   printf("Hardware Length: %d", hw_len);                                                            
@@ -145,15 +187,28 @@ void decode_ARP_packet(const u_char *packet_data){
     printf("%d", target_protocol_addr[p]);//TODO: Look in printing diff of IPv4/6                   
     printf((p + 1 < protocol_len)? "." : "\n");                                                     
   }                                                                                                 
-       
+  
 }
-void decode_IP_header(const u_char *packet){
-    //TODO: (packet[14])?                                                                             
-  printf("IP Packet Header::\n");                                                                   
+void decode_IP_header(const u_char *packet){   
+  printf("IP Packet Header::\n");                                                            
   //Decode                                                                                          
-             
+  int i = 14;
   //print                                                                                           
-  //version 4 bits: IPv(4/6).                                                                       
+  //version 4 bits: IPv(4/6).
+  uint8_t version = ((packet[i] & 0xF0) >> 4); //first part should negate the last 4, then remove them
+  uint8_t header_len;
+  header_len = ((packet[i] & 0x0F) << 4);
+  uint8_t service_type;
+  uint16_t length;
+  uint16_t identifier;
+  uint8_t flag;//3 freaking bits. [x][y][z]
+  uint16_t offset;//13 bits
+  uint8_t TTL;
+  uint8_t protocol;
+  uint16_t checksum;
+  uint32_t src_ip_addr;
+  uint32_t dest_ip_addr;
+  
   printf("Version: %b", (packet[14] >> 4));                                                         
   //Header length 4 bits: 4-byte words (default is 5)                                               
   printf("Header length:%b \n", packet[15]);                                                        
