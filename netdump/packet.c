@@ -2,23 +2,23 @@
 
 void set_header(Packet *header){}
 
-//This should be called decode
+//This should be called decode. Section 5.2 Pages 98-100.
 void print_packet_header(const u_char *packet){
   currSession.broadcast_packets_total++;                                                              
   char *PACKET_PRINT_FORMAT_IPV6 = "%s = %02x:%02x:%02x:%02x:%02x:%02x\n";                          
   int i = 0;                                                                                        
   /*Print the Addresses */                                                                          
-  char *dst_addr = "DEST Address";                                                                  
-  char *src_addr = "SRC Address ";                                                                  
+  char *dst_addr = "DEST Address";//0-5                                       
+  char *src_addr = "SRC Address ";//6-10
   printf(PACKET_PRINT_FORMAT_IPV6, dst_addr, packet[i++], packet[i++],
 	 packet[i++], packet[i++], packet[i++], packet[i++]);                                       
   printf(PACKET_PRINT_FORMAT_IPV6, src_addr, packet[i++], packet[i++],
 	 packet[i++], packet[i++], packet[i++], packet[i++]);                                       
-                                                                                                    
+                                                                                                  
   /*Print the Type/Length field */                                                                  
   //If the Type/Length field is at least 1536 (0x600) then it is a protocol type.                   
   //Otherwise it is a length                                                                        
-  uint16_t type_or_length = packet[i++]*256 + packet[i++];                                          
+  uint16_t type_or_length = ((packet[i++] << 8) +  packet[i++]);//Or 12 
   uint16_t cut_off = 0x0600;                                                                        
   if(type_or_length < cut_off){                                                                     
     printf("Length = %0d\n", packet[12]);                                                           
@@ -36,7 +36,7 @@ void print_packet_header(const u_char *packet){
     if(type_or_length == ARP){                                                                      
       printf("Payload = ARP\n");                                                                    
       currSession.arp_packets_total++; 
-      decode_ARP_packet(packet);                                                                    
+      decode_ARP_packet(packet);                                 
       //Call function that prints out ARP                                                           
     }                                                              
     else if(type_or_length == IPv6 ){                                                               
@@ -53,6 +53,7 @@ void print_packet_header(const u_char *packet){
   }     
 }
 
+//might run with sudo ./netdump arp -a
 void decode_ARP_packet(const u_char *packet_data){
   printf("Arp Packet");
   int i = 14;                                                                                       
@@ -123,43 +124,41 @@ void decode_ARP_packet(const u_char *packet_data){
   
 }
 
-//"Remove" first 14 bits
+//"Remove" first 14 bits. Fixed Header that is 20 bytes long
 void decode_IP_header(const u_char *packet){   
-  printf("IP Packet Header::\n");                                                            
-  //Decode                                                                                          
-  //print                                                                                           
+  printf("IP Packet Header::\n");
   //version 4 bits: IPv(4/6).
   uint8_t version;
   version = ((packet[0] & 0xF0) >> 4); //first part should negate the last 4, then remove them
-  printf("Version: %u\n", version ); 
+  printf("Version: %u\n", version); 
   //Header length 4 bits: 4-byte words (default is 5)
   uint8_t header_len;
-  header_len = ((packet[0] & 0x0F) << 4);
-  printf("Header length:%u \n", header_len);
+  header_len = ((packet[0] & 0x0F) * 4);
+  printf("Header length:%u\n", header_len);
 
   uint8_t service_type;
   service_type = packet[1];
   printf("Service Type: %u \n", service_type);//Usually this is all 0
-
   uint16_t length;
   length = packet[2] * 256 + packet[3];
   printf("Length of the Payload: %u\n", length);
   //Identifier 16 bits: unique id each one. used for reassembley
   uint16_t identifier;
-  identifier = packet[3] * 256 + packet[4];
+  identifier = packet[4] * 256 + packet[5];
   printf("Identifier: %u\n", identifier);
   //Flags 3 bits. first is reserved & set to 0.                                                     
   //     D = 1 = don't frag                         
   //     M =1, more data, =0, last packet
   uint8_t flag;//3 freaking bits. [x][y][z]
   //offset(13bits): indicate where the frag should be placed in reassembly buffer
-  flag = (((packet[4] * 256 + packet[5]) & 0xFFF8) << 5); //Really gottta double check this stuff
+  flag = (packet[6] >>  5); //Really gottta double check this stuff
   printf("Flag: %u %u %u\n", (flag >> 2), ((flag >> 1) & 0x01), (flag  & 0x01));
   uint16_t offset;//13 bits, number of #8 bytes
-  offset = packet[5] * 256 + packet[6];
+  //make room for p[7]. Then remvoe the first 3 bits. THEN add p7.
+  offset = (((packet[6] << 8) & 0x1F) + packet[7]);
   printf("Offset = %u\n", offset);
   uint8_t TTL;
-  TTL = packet[6];
+  TTL = packet[8];
   printf("TTL: %u\n", TTL);
 
   //Gateway (3), Stream(5), Exterior Gateway(8), private interrori gateay(9)
@@ -169,7 +168,7 @@ void decode_IP_header(const u_char *packet){
   uint8_t UDP = 17;
 
   uint8_t protocol;
-  protocol = packet[7];
+  protocol = packet[9];
   printf("Protocol: %u", protocol);
   char *result;
   if(protocol == ICMP){
@@ -186,10 +185,10 @@ void decode_IP_header(const u_char *packet){
   
   //checksum 16bits: used for err detections
   uint16_t checksum;
-  checksum = packet[8] * 256 + packet[9];
+  checksum = packet[10] * 256 + packet[11];
   printf("Checksum: %u\n", checksum);
-  printf("Src IP Address %u.%u.%u.%u\n", packet[10], packet[11], packet[12], packet[13]);
-  printf("Dst IP Address %u.%u.%u.%u\n", packet[14], packet[15], packet[16], packet[17]);
+  printf("Src IP Address %u.%u.%u.%u\n", packet[12], packet[13], packet[14], packet[15]);
+  printf("Dst IP Address %u.%u.%u.%u\n", packet[16], packet[17], packet[18], packet[19]);
 
   //TODO figure out the length part
   //options (variable)                                                                              
