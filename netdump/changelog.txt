@@ -1,3 +1,30 @@
+6/24
+  -Finally figured out bitshift
+  -Another bug, I switched the decoding for offset & flag
+  -Found first bug in IP. I am doing the two byte thing wrong. I was
+     for ex:,
+        uint16_t length = p[4] * 256 + p[5]
+	uint16_t id = p[5] *256 + p[6];
+     I was overlapping on the numbers.
+
+6/23
+    -ARP looks fine, but there is still something wrong with IP.
+       I can't get any ICMP packets, my flags are always 000 and
+       my protocol is always 0. So I am doing something wrong.
+
+6/22
+    -Got tired of the numbers, started doing indexes on the packet incrementer
+6/16
+    -Have lot of stuff commented out to just work on ARP packets. Will finish
+       ARP tomorrow
+    -Going to start testing my ARP decode/print. will need to refactor, becuase
+    	it looks pretty poorly done.
+    -Trying to figure out teh variable length on ARP. It says when it is Ethernet
+    	then the value is 6. Does this mean that Hardware address is depdent on hardware
+	type? Well when I write it, it seems obvious. But I don't see anywhere in the
+	text that explicity says that.
+    -Decoding ARP and the IP header. But in those methods I have p[14] and on
+        Also I am just decoding and printing on one line. I should seperate this
 
 6/15
     -Looks like 5.1a b, c, and d are all totally done. 

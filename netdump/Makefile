@@ -16,13 +16,13 @@ LIBS = -lpcap
 	@rm -f $@
 	$(CC) $(CFLAGS) -c ./$*.c
 
-CSRC =	netdump.c \
-	util.c setsignal.c
+CSRC =	netdump.c  \
+	packet.c util.c setsignal.c
 
 SRC =	$(CSRC) $(LOCALSRC)
 
 OBJ =	$(CSRC:.c=.o) $(GENSRC:.c=.o) $(LOCALSRC:.c=.o) 
-HDR =
+HDR =	packet.h
 
 CLEANFILES = $(PROG) $(OBJ)
 

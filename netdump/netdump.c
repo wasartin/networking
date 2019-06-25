@@ -1,10 +1,7 @@
 /*
  * Packet Sniffer 
  * ---------------
- * 
- * 
  */
-
 #define RETSIGTYPE void
 
 #include <sys/types.h>
@@ -17,20 +14,15 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "packet.h"
 #ifndef setsignal_h
 #define setsignal_h
 
 RETSIGTYPE (*setsignal(int, RETSIGTYPE (*)(int)))(int);
 #endif
+
 char cpre580f98[] = "netdump";//not sure yet
 
-//Helper method that prints out the type of the packet.
-void print_packet_header(const u_char* packet);
-
-/*
-  A method header for printing the raw output. it takes a user, pcap packethandler
-  and a const char pointer p
-*/
 void raw_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p);
 
 int packet_type; //ICMP(1), UDP(17), TCP(6) etc.
@@ -42,14 +34,8 @@ extern void bpf_dump(const struct bpf_program *, int); //Berkey packet Filter
 
 extern char *copy_argv(char **);
 
-/* Forwards */
- void program_ending(int);
-
-/* Global Variables And Declarations */
-int num_broadcast_packets = 0;
-int num_ip_packets = 0;
-int num_arp_packets = 0;
-
+// Forwards //Edited THis, added the session struct
+void program_ending(int);
 
 /* Length of saved portion of packet. */
 int snaplen = 1500;
@@ -60,7 +46,7 @@ extern int optind;
 extern int opterr;
 extern char *optarg;
 int pflag = 0, aflag = 0;
-
+Session currSession;
 int main(int argc, char **argv) {
 	int cnt, op, i, done = 0;
 	bpf_u_int32 localnet, netmask;
@@ -73,7 +59,12 @@ int main(int argc, char **argv) {
 	int run_ad_infinitum = -1;
 	cnt = run_ad_infinitum;
 	device = NULL;
-	
+	currSession.broadcast_packets_total = 0;
+	currSession.ip_packets_total = 0;
+	currSession.arp_packets_total = 0;
+	currSession.icmp_packets_total = 0;
+	currSession.tcp_packets_total = 0;
+	currSession.udp_packets_total = 0;
 	if ((cp = strrchr(argv[0], '/')) != NULL)
 		program_name = cp + 1;
 	else
@@ -157,11 +148,6 @@ int main(int argc, char **argv) {
 	  exit(1);
 	}
 	pcap_close(pd);
-
-	/** TODO: DELETE THIS. THIS IS ONLY HERE FOR DEBUGGING SMALL RUNS */
-	//printf("Number of Broadcast packets received = %d\n", num_broadcast_packets);
-	//printf("Number of IP packets received = %d\n", num_ip_packets);
-	//printf("Number of ARP packets received = %d\n", num_arp_packets);
 	exit(0);
 }
 
@@ -182,11 +168,13 @@ void program_ending(int signo) {
 			  stat.ps_drop);
 	    
 	    (void)fprintf(stderr, "Number of Broadcast Packets = %d\n",
-			  num_broadcast_packets);
+			  currSession.broadcast_packets_total);
 	    (void)fprintf(stderr, "Number of IP Packets = %d\n",
-			  num_ip_packets);
+			  currSession.ip_packets_total);
 	    (void)fprintf(stderr, "Number of ARP Packets = %d\n",
-			  num_arp_packets);    
+			  currSession.arp_packets_total);
+	    (void)fprintf(stderr, "Number of ICMP Packets = %d\n",
+			  currSession.icmp_packets_total);    	    
 	  }
 	}
 	exit(0);
@@ -217,8 +205,7 @@ void default_print_unaligned(register const u_char *cp, register u_int length) {
 /*
  * By default, print the packet out in hex.
  */
-void
-default_print(register const u_char *bp, register u_int length) {
+void default_print(register const u_char *bp, register u_int length) {
 	register const u_short *sp;
 	register u_int i;
 	register int nshorts;
@@ -245,47 +232,6 @@ default_print(register const u_char *bp, register u_int length) {
 }
 
 /*
- * Print the packet header
- *
- */
-void print_packet_header(const u_char* packet){
-  num_broadcast_packets++;
-  char *PACKET_PRINT_FORMAT_IPV6 = "%s = %02x:%02x:%02x:%02x:%02x:%02x\n";
- 
-  /*Print the Addresses */
-  char *dst_addr = "DEST Address";
-  char *src_addr = "SRC Address ";
-  printf(PACKET_PRINT_FORMAT_IPV6, dst_addr, packet[0], packet[1],\
-	 packet[2], packet[3], packet[4], packet[5]);
-  printf(PACKET_PRINT_FORMAT_IPV6, src_addr, packet[6], packet[7],\
-	 packet[8], packet[9], packet[10], packet[11]);
-
-  /*Print the Type/Length field */
-  //If the Type/Length field is at least 1536 (0x600) then it is a protocol type.
-  //Otherwise it is a length
-  uint16_t type_or_length = packet[12]*256 + packet[13];
-  uint16_t cut_off = 0x0600;
-  if(type_or_length >= cut_off){
-    printf("Type = 0x%04x, ", type_or_length);
-    
-    uint16_t IP = 0x800;
-    uint16_t ARP = 0x806;
-    if(type_or_length == IP){
-      printf("Payload = IP\n");
-      num_ip_packets++;
-    }
-    else if(type_or_length == ARP){
-      printf("Payload = ARP\n");
-      num_arp_packets++;
-    }else{
-      printf("Payload is not yet mapped\n");
-    }
-  }else{
-    printf("Length = %0d\n", packet[12]);
-  }  
-}
-
-/*
  * This is used as the callback function for pcap_loop. 
  * it is called every time a packet is received. 
  * caplen is the length of the ethernet packet
@@ -295,14 +241,14 @@ void raw_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p) {
   u_int length = h->len;
   u_int caplen = h->caplen; //the length of the ethernet packet
 
-  printf("\n\t +++++++++++[START OF PACKET]+++++++++++\n");
-    
+  printf("\n\t -----------[START OF DECODE]------------\n");  
   print_packet_header(p);
-  //Printing the packet
+  printf("\n\t -------[END OF DECODE]-------\n");
+  printf("\n\t -----------[START OF RAW DATA]-----------\n");
   default_print(p, caplen);
-  putchar('\n');
-  
-  
-  printf("\n\t ------------[END OF PACKET]------------\n");
+  putchar('\n');  
+  printf("\n\t ------------[END OF RAW DATA]------------\n");
+  //  free(currPacket.raw_data);
 }
+
 
