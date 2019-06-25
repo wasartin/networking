@@ -170,18 +170,6 @@ void decode_IP_header(const u_char *packet){
   uint8_t protocol;
   protocol = packet[9];
   printf("Protocol: %u", protocol);
-  char *result;
-  if(protocol == ICMP){
-    printf(", ICMP\n");
-  }
-  else if(protocol == TCP){
-    printf(", TCP\n");
-  }
-  else if(protocol == UDP){
-    printf(", UDP\n");
-  }else{
-    printf(", unknown\n");
-  }
   
   //checksum 16bits: used for err detections
   uint16_t checksum;
@@ -190,22 +178,24 @@ void decode_IP_header(const u_char *packet){
   printf("Src IP Address %u.%u.%u.%u\n", packet[12], packet[13], packet[14], packet[15]);
   printf("Dst IP Address %u.%u.%u.%u\n", packet[16], packet[17], packet[18], packet[19]);
 
-  //TODO figure out the length part
-  //options (variable)                                                                              
-  //data (variable). 65,536 - header length.
-
-  //TODO: Call ICMP Header
-
   if(protocol == ICMP){
     currSession.icmp_packets_total++;
-    decode_ICMP_header(packet + header_len);
+    decode_ICMP_header(packet + header_length);
+  }
+  else if(protocol == TCP){
+    currSession.tcp_packets_total++;
+  }
+  else if(protocol == UDP){
+    currSession.udp_packets_total++;
+  }else{
+    printf("Not yet mapped Protocol number %u\n", protocol);
   }
 }
 
   //only give this packet the portion it needs
 void decode_ICMP_header(const u_char *packet){
   //TODO:
-  printf("ICMP::\n");
+  printf("Protocol: ICMP::\n");
   //starts after the IP header.                                                                     
   uint8_t type = packet[0];
   uint8_t code = packet[1];

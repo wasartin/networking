@@ -62,7 +62,9 @@ int main(int argc, char **argv) {
 	currSession.broadcast_packets_total = 0;
 	currSession.ip_packets_total = 0;
 	currSession.arp_packets_total = 0;
-	
+	currSession.icmp_packets_total = 0;
+	currSession.tcp_packets_total = 0;
+	currSession.udp_packets_total = 0;
 	if ((cp = strrchr(argv[0], '/')) != NULL)
 		program_name = cp + 1;
 	else
