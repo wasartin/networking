@@ -184,6 +184,7 @@ void decode_IP_header(const u_char *packet){
   else if(protocol == TCP){
     printf("Protocol is TCP\n");
     currSession.tcp_packets_total++;
+    decode_ICMP_header(packet + header_len);
   }
   else if(protocol == UDP){
     printf("Protocol is UDP\n");
@@ -248,8 +249,64 @@ void decode_ICMP_header(const u_char *packet){
     printf("Original timestamp:   %u\n", original_timestamp);
     printf("Receive timestamp:    %u\n", receive_timestamp);
     printf("Transmit timestamp:   %u\n", transmit_timestamp); 
-  }
-       
-                      
+  }                      
 }
 
+void decode_TCP_header(const u_char *packet){
+
+  uint16_t src_port_num;
+  src_port_num = ((packet[0] << 8) + packet[1]);
+  uint16_t dst_port_num;
+  dst_port_num = ((packet[2] << 8) + packet[3]);
+  uint32_t seq_num;
+  seq_num = ((
+	      ((
+		((packet[4] << 8) + packet[5])
+		<< 8) + packet[6])
+	      << 8) + packet[7]);
+  uint32_t ack_num;
+  ack_num = ((
+	      ((
+		((packet[8] << 8) + packet[9])
+		<< 8) + packet[10])
+	      << 8) + packet[11]);
+  uint8_t hdr_len;//4 bits
+  hdr_len = (packet[12] & 0xF0); // times 4?
+  uint8_t reserved;//6 bits
+  reserved = ((packet[12] & 0x06) >> 2);
+  //URG | ACK | PSH | RST | SYN | FIN
+  //URG = Packet contains urgent data
+  //ACK = ack num is valid
+  //PSH = Data should be push to the appl
+  //RST = Reset packet
+  //SYN = Synchronize Packet
+  //FIN = Finish Packet
+  uint8_t flags;//6
+  flags = ((packet[13] & 0x06) >> 2);
+  uint16_t window_size;
+  window_size = (packet[14] << 8 + packet[15]);
+  uint16_t checksum;
+  checksum = ((packet[16] << 8) + packet[17]);
+  uint16_t urgent_pointer;
+  urgent_pointer = ((packet[18] << 8) + packet[19]);
+
+
+
+  /*
+  uint64_t options = packet[20] << 8;//Up to 40 bits.
+  
+  int i = 0;
+  int offset = 21;
+  for(i = 0; i < 5; i++){
+    u_char curr;
+    urgent_pointer += packet[offset + i];
+    if(i + 1 < 5){
+      urgent_pointer << 8;
+    }
+  }
+
+  printf("Options: %u\n", options);
+  */
+  
+  
+}

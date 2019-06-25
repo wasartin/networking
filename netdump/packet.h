@@ -44,5 +44,5 @@ void print_packet_header(const u_char *packet);
 void decode_ARP_packet(const u_char *packet_data);//6a
 void decode_IP_header(const u_char *packet);//6b
 void decode_ICMP_header(const u_char *packet);//6c
-
+void decode_TCP_header(const u_char *packet);//7a
 #endif
