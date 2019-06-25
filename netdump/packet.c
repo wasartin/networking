@@ -33,7 +33,7 @@ void print_packet_header(const u_char *packet){
       currSession.ip_packets_total++;
       decode_IP_header(packet + 14);
     }
-    if(type_or_length == ARP){                                                                      
+    else if(type_or_length == ARP){
       printf("Payload = ARP\n");                                                                    
       currSession.arp_packets_total++; 
       decode_ARP_packet(packet);                                 
@@ -42,8 +42,7 @@ void print_packet_header(const u_char *packet){
     else if(type_or_length == IPv6 ){                                                               
       printf("Payload = IPv6\n");                                                                   
       //increment this?                                                                             
-    }else{                                                                                          
-      printf("Payload is not yet mapped\n");                                                        
+    }else{                                                        
       //still don't know what 0x9000 is                                                             
       //0x7bda,                                                                                     
       //0x2715,                                                                                     
@@ -169,7 +168,7 @@ void decode_IP_header(const u_char *packet){
 
   uint8_t protocol;
   protocol = packet[9];
-  printf("Protocol: %u", protocol);
+  printf("Protocol: %u\n", protocol);
   
   //checksum 16bits: used for err detections
   uint16_t checksum;
@@ -180,12 +179,14 @@ void decode_IP_header(const u_char *packet){
 
   if(protocol == ICMP){
     currSession.icmp_packets_total++;
-    decode_ICMP_header(packet + header_length);
+    decode_ICMP_header(packet + header_len);
   }
   else if(protocol == TCP){
+    printf("Protocol is TCP\n");
     currSession.tcp_packets_total++;
   }
   else if(protocol == UDP){
+    printf("Protocol is UDP\n");
     currSession.udp_packets_total++;
   }else{
     printf("Not yet mapped Protocol number %u\n", protocol);
@@ -199,13 +200,33 @@ void decode_ICMP_header(const u_char *packet){
   //starts after the IP header.                                                                     
   uint8_t type = packet[0];
   uint8_t code = packet[1];
+  uint16_t checksum = packet[2] * 256 + packet[3];
+  uint32_t original_timestamp = ((
+				  ((
+				   ((packet[4] << 8) + packet[5])
+				   << 8) + packet[6])
+				  << 8) + packet[7]);
+  uint32_t receive_timestamp = ((
+				 ((
+				   ((packet[8] << 8) + packet[9])
+				   << 8) + packet[10])
+				 << 8) + packet[11]);
+  uint32_t transmit_timestamp = ((
+				  ((
+				    ((packet[12] << 8) + packet[13])
+				    << 8) + packet[14])
+				  << 8) + packet[15]);
+  printf("Type: %u, Code: %u\n", type, code);
+  printf("Checksum: %u\n", checksum);
   
-  printf("Type: %u, Code: %u", type, code);
   if(type == 0 && code == 0){
     printf("\tICMP ECHO Reply\n");
   }
   else if(type == 8 && code == 0){
     printf("\tICMP ECHO Request\n");
+  }
+  else if(type == 13 && code == 0){
+    printf("\tTimestamp request\n");
   }
   else if(type == 14 && code ==0){
     printf("\tTimestamp reply\n");
@@ -221,25 +242,14 @@ void decode_ICMP_header(const u_char *packet){
   }else{
     printf("Don't know yet\n");
   }
-  
-  uint16_t checksum = packet[2] * 256 + packet[3];
-  printf("Checksum: %u\n", checksum);
-  
-  //Type (8bits)                                                                                    
-  //    0 -> Echo reply ||                                                                          
-  //    3 -> Err, dest unreachable                                                                  
-  //    5 -> Redirection                                                                            
-  //    8 -> echo request                                                                           
-  //   11 -> Time exceeded                                                                          
-  //   13 -> Timestamp req                                                                          
-  //   14 -> Timestampe reply                                                                       
-  //    if type = 0 then ICMP ECHO REPLY                                                            
-  //Code(8bits)                                                                                     
-  //    0 -> Network-based redirect                                                                 
-  //    1 -> host-based redirect                                                                    
-  //    2 -> Network-based redirect of the type of service specified                                
-  //    3 -> Host-based redirect "                                                                  
-  //TODO: Figure out rest & timestamp                                                                        
+
+  //Time stuff only prints here
+  if(type == 13 || type == 14){
+    printf("Original timestamp:   %u\n", original_timestamp);
+    printf("Receive timestamp:    %u\n", receive_timestamp);
+    printf("Transmit timestamp:   %u\n", transmit_timestamp); 
+  }
+       
                       
 }
 
