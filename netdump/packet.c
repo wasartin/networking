@@ -184,7 +184,7 @@ void decode_IP_header(const u_char *packet){
   else if(protocol == TCP){
     printf("Protocol is TCP\n");
     currSession.tcp_packets_total++;
-    decode_ICMP_header(packet + header_len);
+    decode_TCP_header(packet + header_len);
   }
   else if(protocol == UDP){
     printf("Protocol is UDP\n");
@@ -204,17 +204,20 @@ void decode_ICMP_header(const u_char *packet){
   uint16_t checksum = packet[2] * 256 + packet[3];
   uint32_t original_timestamp = ((
 				  ((
-				   ((packet[4] << 8) + packet[5])
+				   ((
+				     packet[4] << 8) + packet[5])
 				   << 8) + packet[6])
 				  << 8) + packet[7]);
   uint32_t receive_timestamp = ((
 				 ((
-				   ((packet[8] << 8) + packet[9])
+				   ((
+				     packet[8] << 8) + packet[9])
 				   << 8) + packet[10])
 				 << 8) + packet[11]);
   uint32_t transmit_timestamp = ((
 				  ((
-				    ((packet[12] << 8) + packet[13])
+				    ((
+				      packet[12] << 8) + packet[13])
 				    << 8) + packet[14])
 				  << 8) + packet[15]);
   printf("Type: %u, Code: %u\n", type, code);
@@ -256,40 +259,55 @@ void decode_TCP_header(const u_char *packet){
 
   uint16_t src_port_num;
   src_port_num = ((packet[0] << 8) + packet[1]);
+  printf("Source Port Num: %u\n", src_port_num);
   uint16_t dst_port_num;
   dst_port_num = ((packet[2] << 8) + packet[3]);
+  printf("Destination Porn Num: %u\n", dst_port_num);
   uint32_t seq_num;
   seq_num = ((
 	      ((
-		((packet[4] << 8) + packet[5])
+		((
+		  packet[4] << 8) + packet[5])
 		<< 8) + packet[6])
 	      << 8) + packet[7]);
+  printf("Sequence Num: %u\n", seq_num);
   uint32_t ack_num;
   ack_num = ((
 	      ((
-		((packet[8] << 8) + packet[9])
+		((
+		  packet[8] << 8) + packet[9])
 		<< 8) + packet[10])
 	      << 8) + packet[11]);
+  printf("Acknowledge Num: %u\n", ack_num);
   uint8_t hdr_len;//4 bits
-  hdr_len = (packet[12] & 0xF0); // times 4?
+  hdr_len = (packet[12] & 0xF0) * 4; // times 4?
+  printf("Header Length: %u\n", hdr_len);
   uint8_t reserved;//6 bits
-  reserved = ((packet[12] & 0x06) >> 2);
-  //URG | ACK | PSH | RST | SYN | FIN
-  //URG = Packet contains urgent data
-  //ACK = ack num is valid
-  //PSH = Data should be push to the appl
-  //RST = Reset packet
-  //SYN = Synchronize Packet
-  //FIN = Finish Packet
+  reserved = ((packet[12] & 0x3F) >> 2);
+  printf("Reserved: %u\n", reserved);
   uint8_t flags;//6
-  flags = ((packet[13] & 0x06) >> 2);
+  flags = (packet[13] & 0x3F);
+  printf("Flags: %u\n", flags);
+  printf("Flag\t          Function          \t Value \n");
+  printf("URG \t Packet Contains Urgent Data \t   %u\n", flags >> 5);
+  printf("ACK \t      Ack Num Is Valid  \t   %u\n", flags >> 4 & 0x01);
+  printf("PSH \tData Should be pushed to Appl\t   %u\n", flags >> 3 & 0x01);
+  printf("RST \t         Reset Packet       \t   %u\n", flags >> 2 & 0x01);
+  printf("SYN \t      Synchronize Packet    \t   %u\n", flags >> 1 & 0x01);
+  printf("FIN \t       Finish Packet        \t   %u\n", flags & 0x01);
+
+  //Todo print flag in pretty format
+
+
   uint16_t window_size;
   window_size = (packet[14] << 8 + packet[15]);
+  printf("Window size: %u\n", window_size);
   uint16_t checksum;
   checksum = ((packet[16] << 8) + packet[17]);
+  printf("Checksum: %u\n", checksum);
   uint16_t urgent_pointer;
   urgent_pointer = ((packet[18] << 8) + packet[19]);
-
+  printf("Urgent Pointer: %u\n", urgent_pointer);
 
 
   /*
