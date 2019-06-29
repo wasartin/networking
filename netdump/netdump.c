@@ -174,7 +174,9 @@ void program_ending(int signo) {
 	    (void)fprintf(stderr, "Number of ARP Packets = %d\n",
 			  currSession.arp_packets_total);
 	    (void)fprintf(stderr, "Number of ICMP Packets = %d\n",
-			  currSession.icmp_packets_total);    	    
+			  currSession.icmp_packets_total);
+	    (void)fprintf(stderr, "Number of TCP Packets = %d\n",
+			  currSession.tcp_packets_total);    	    
 	  }
 	}
 	exit(0);
