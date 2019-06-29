@@ -296,9 +296,6 @@ void decode_TCP_header(const u_char *packet){
   printf("SYN \t      Synchronize Packet    \t   %u\n", flags >> 1 & 0x01);
   printf("FIN \t       Finish Packet        \t   %u\n", flags & 0x01);
 
-  //Todo print flag in pretty format
-
-
   uint16_t window_size;
   window_size = (packet[14] << 8 + packet[15]);
   printf("Window size: %u\n", window_size);
@@ -308,23 +305,18 @@ void decode_TCP_header(const u_char *packet){
   uint16_t urgent_pointer;
   urgent_pointer = ((packet[18] << 8) + packet[19]);
   printf("Urgent Pointer: %u\n", urgent_pointer);
-
-
-  /*
-  uint64_t options = packet[20] << 8;//Up to 40 bits.
   
   int i = 0;
-  int offset = 21;
-  for(i = 0; i < 5; i++){
-    u_char curr;
-    urgent_pointer += packet[offset + i];
-    if(i + 1 < 5){
-      urgent_pointer << 8;
-    }
+  int diff = 0;
+  if(hdr_len == 0){
+    hdr_len = 40;
   }
-
-  printf("Options: %u\n", options);
-  */
-  
+  diff = hdr_len - 20;
+  int offset = 20;
+  printf("Options--- \n");
+  for(i = 0; i < diff; i++){
+    printf("%x", packet[i + offset]);
+  }
+  printf("\n");
   
 }
