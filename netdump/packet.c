@@ -55,8 +55,7 @@ void print_packet_header(const u_char *packet){
 //might run with sudo ./netdump arp -a
 void decode_ARP_packet(const u_char *packet_data){
   printf("Arp Packet");
-  int i = 14;                                                                                       
-                                                                                                    
+  int i = 14;                                                                           
   uint16_t hw_type = packet_data[i++] * 256 + packet_data[i++];                                     
   uint16_t protocol_type = packet_data[i++] *256 + packet_data[i++];
   uint8_t hw_len = packet_data[i++];                                                                
@@ -65,7 +64,7 @@ void decode_ARP_packet(const u_char *packet_data){
                
   u_char sender_hw_addr[hw_len];                                                                    
   int h = 0;                                                                                        
-  for(h = 0; h < hw_len; h++){                                          
+  for(h = 0; h < hw_len; h++){          
     sender_hw_addr[h] = packet_data[i++];                                                           
   }                                                                                                 
   //if IPv4, then it is 4 bytes, so IPv6 is 6 bytes?                                                
