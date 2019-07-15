@@ -65,6 +65,11 @@ int main(int argc, char **argv) {
   currSession.icmp_packets_total = 0;
   currSession.tcp_packets_total = 0;
   currSession.udp_packets_total = 0;
+  currSession.smtp_packets_total = 0;
+  currSession.pop_packets_total = 0;
+  currSession.imap_packets_total = 0;
+  currSession.http_packets_total = 0;
+  
   if ((cp = strrchr(argv[0], '/')) != NULL){
     program_name = cp + 1;
   }else{

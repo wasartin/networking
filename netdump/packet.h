@@ -18,6 +18,10 @@ typedef struct{
   int icmp_packets_total;  
   int tcp_packets_total;
   int udp_packets_total;
+  int smtp_packets_total;
+  int pop_packets_total;
+  int imap_packets_total;
+  int http_packets_total;
 }Session;
 
 extern Session currSession;

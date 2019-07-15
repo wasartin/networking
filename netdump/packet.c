@@ -319,3 +319,21 @@ void decode_TCP_header(const u_char *packet){
   printf("\n");
   
 }
+
+
+void smtp_decode(u_char *packet){
+  
+
+}
+
+void pop_decode(u_char *packet){
+
+}
+
+void imap_decode(u_char *packet){
+
+}
+
+void http_decode(u_char *packet){
+
+}
