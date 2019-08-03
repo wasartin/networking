@@ -183,7 +183,7 @@ void decode_IP_header(const u_char *packet){
   else if(protocol == TCP){
     printf("Protocol is TCP\n");
     currSession.tcp_packets_total++;
-    decode_TCP_header(packet + header_len);
+    decode_TCP_header(packet + header_len, length);//added for the email part
   }
   else if(protocol == UDP){
     printf("Protocol is UDP\n");
@@ -254,7 +254,7 @@ void decode_ICMP_header(const u_char *packet){
   }                      
 }
 
-void decode_TCP_header(const u_char *packet){
+void decode_TCP_header(const u_char *packet, uint16_t payloadLength){
 
   uint16_t src_port_num;
   src_port_num = ((packet[0] << 8) + packet[1]);
@@ -305,66 +305,83 @@ void decode_TCP_header(const u_char *packet){
   urgent_pointer = ((packet[18] << 8) + packet[19]);
   printf("Urgent Pointer: %u\n", urgent_pointer);
   
-  /* I think I need to remove this for the email part
   int i = 0;
-  int diff = 0;
+  int remaining = 0;
   if(hdr_len == 0){
-    hdr_len = 40;
+    hdr_len = 20;
   }
-  diff = hdr_len - 20;
-  int offset = 20;
+  remaining = payloadLength - hdr_len;
+  /*int offset = 20;
   printf("Options--- \n");
   for(i = 0; i < diff; i++){
     printf("%x", packet[i + offset]);
   }
   printf("\n");
   */
-  if(hdr_len == 0){
-    hdr_len = 20;
-  }
 
   //email servers listen on port 25
   if(src_port_num == 25 || dst_port_num == 25){
     currSession.smtp_packets_total++;
-    SMTP_decode(packet + hdr_len);
+    SMTP_decode(packet + hdr_len, remaining);
   }
   //POp3 listens on 110
   else if(src_port_num == 110 || dst_port_num == 110){
     currSession.pop_packets_total++;
-    POP_decode(packet + hdr_len);
+    POP_decode(packet + hdr_len, remaining);
   }
   //Couldn't find this one anywhere, but google said 143 normal & 993 encrpyted
   else if(src_port_num == 143 || dst_port_num == 143 ||
 	  src_port_num == 993 || dst_port_num == 993){
     currSession.imap_packets_total++;
-    IMAP_decode(packet + hdr_len);
+    IMAP_decode(packet + hdr_len, remaining);
   }
   //HTTP=80, or 443 for encrypted
   else if(src_port_num == 80 || dst_port_num == 80 ||
 	  src_port_num == 443 || dst_port_num == 443){
     currSession.http_packets_total++;
-    HTTP_decode(packet + hdr_len);
+    HTTP_decode(packet + hdr_len, remaining);
   }
 }
 
 //9.2.a
-void SMTP_decode(const u_char *packet){
+void SMTP_decode(const u_char *packet, uint16_t payloadLength){
   printf("\n SMTP");
-  
+  printMail(packet);
 
 }
 
 //9.2.b
-void POP_decode(const u_char *packet){
+void POP_decode(const u_char *packet, uint16_t payloadLength){
   printf("POP\n");
+  printMail(packet);
 }
 
 //9.2.c
-void IMAP_decode(const u_char *packet){
+void IMAP_decode(const u_char *packet, uint16_t payloadLength){
   printf("IMAP\n");
+  printMail(packet);
 }
 
 //10.2.a
-void HTTP_decode(const u_char *packet){
+void HTTP_decode(const u_char *packet, uint16_t payloadLength){
   printf("HTTP\n");
+  char *endOfLine = "\n";
+  char *curr = '\0';
+  char *located;
+  while((curr = strstr(packet, endOfLine)) != NULL){
+    curr = '\0';
+    printf("%s\n", packet);
+    packet = curr + 1;
+  }
+}
+
+void printMail(const u_char *packet){
+  char *endOfLine = "\n";
+  char *curr = '\0';
+  char *located;
+  while((curr = strstr(packet, endOfLine)) != NULL){
+    curr = '\0';
+    printf("%s\n", packet);
+    packet = curr + 1;
+  }
 }
