@@ -181,7 +181,15 @@ void program_ending(int signo) {
       (void)fprintf(stderr, "Number of TCP Packets = %d\n",
 		    currSession.tcp_packets_total);
       (void)fprintf(stderr, "Number of UDP Packets = %d\n",
-		    currSession.udp_packets_total);    	    
+		    currSession.udp_packets_total);
+      (void)fprintf(stderr, "Number of SMTP Packets = %d\n",
+		    currSession.smtp_packets_total);
+      (void)fprintf(stderr, "Number of POP Packets = %d\n",
+		    currSession.pop_packets_total);
+      (void)fprintf(stderr, "Number of IMAP Packets = %d\n",
+		    currSession.imap_packets_total);
+      (void)fprintf(stderr, "Number of HTTP Packets = %d\n",
+		    currSession.http_packets_total);
     }
   }
   exit(0);

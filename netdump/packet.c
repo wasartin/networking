@@ -305,6 +305,7 @@ void decode_TCP_header(const u_char *packet){
   urgent_pointer = ((packet[18] << 8) + packet[19]);
   printf("Urgent Pointer: %u\n", urgent_pointer);
   
+  /* I think I need to remove this for the email part
   int i = 0;
   int diff = 0;
   if(hdr_len == 0){
@@ -317,23 +318,53 @@ void decode_TCP_header(const u_char *packet){
     printf("%x", packet[i + offset]);
   }
   printf("\n");
+  */
+  if(hdr_len == 0){
+    hdr_len = 20;
+  }
+
+  //email servers listen on port 25
+  if(src_port_num == 25 || dst_port_num == 25){
+    currSession.smtp_packets_total++;
+    SMTP_decode(packet + hdr_len);
+  }
+  //POp3 listens on 110
+  else if(src_port_num == 110 || dst_port_num == 110){
+    currSession.pop_packets_total++;
+    POP_decode(packet + hdr_len);
+  }
+  //Couldn't find this one anywhere, but google said 143 normal & 993 encrpyted
+  else if(src_port_num == 143 || dst_port_num == 143 ||
+	  src_port_num == 993 || dst_port_num == 993){
+    currSession.imap_packets_total++;
+    IMAP_decode(packet + hdr_len);
+  }
+  //HTTP=80, or 443 for encrypted
+  else if(src_port_num == 80 || dst_port_num == 80 ||
+	  src_port_num == 443 || dst_port_num == 443){
+    currSession.http_packets_total++;
+    HTTP_decode(packet + hdr_len);
+  }
+}
+
+//9.2.a
+void SMTP_decode(const u_char *packet){
+  printf("\n SMTP");
   
-}
-
-
-void smtp_decode(u_char *packet){
-  
 
 }
 
-void pop_decode(u_char *packet){
-
+//9.2.b
+void POP_decode(const u_char *packet){
+  printf("POP\n");
 }
 
-void imap_decode(u_char *packet){
-
+//9.2.c
+void IMAP_decode(const u_char *packet){
+  printf("IMAP\n");
 }
 
-void http_decode(u_char *packet){
-
+//10.2.a
+void HTTP_decode(const u_char *packet){
+  printf("HTTP\n");
 }

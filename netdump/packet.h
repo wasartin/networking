@@ -49,4 +49,8 @@ void decode_ARP_packet(const u_char *packet_data);//6a
 void decode_IP_header(const u_char *packet);//6b
 void decode_ICMP_header(const u_char *packet);//6c
 void decode_TCP_header(const u_char *packet);//7a
+void SMTP_decode(const u_char *packet);//9.2.a
+void POP_decode(const u_char *packet);//9.2.b
+void IMAP_decode(const u_char *packet);//9.2.c
+void HTTP_decode(const u_char *packet);//10.2.a
 #endif
