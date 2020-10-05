@@ -42,8 +42,7 @@ void print_packet_header(const u_char *packet){
     else if(type_or_length == IPv6 ){                                                               
       printf("Payload = IPv6\n");                                                                   
       //increment this?                                                                             
-    }else{                                                        
-      //still don't know what 0x9000 is                                                             
+    }else{                                                                                                             
       //0x7bda,                                                                                     
       //0x2715,                                                                                     
       //0x1baa,                                                                                     
@@ -52,7 +51,7 @@ void print_packet_header(const u_char *packet){
   }     
 }
 
-//might run with sudo ./netdump arp -a
+//If there are any issues, run with sudo ./netdump arp -a
 void decode_ARP_packet(const u_char *packet_data){
   printf("Arp Packet");
   int i = 14;                                                                                       
@@ -99,7 +98,7 @@ void decode_ARP_packet(const u_char *packet_data){
   //This is where things can get weird. Got to print out all the things with                        
   //  variables lengths. This would probably be better to put into a method                         
   //IPv4 does xxx.xxx.xxx.xxx. || IPv6 does xx:xx:xx:xx:                                            
-  //Hardware addresses use the :, but I will diff between IPv later.                                
+  //Hardware addresses use the :                           
   printf("Sender Hardware Address: ");                                                              
   for(h = 0; h < hw_len; h++){//There has to be a better way to do this                             
     printf("%02x", sender_hw_addr[h]);                                                              
@@ -117,7 +116,7 @@ void decode_ARP_packet(const u_char *packet_data){
   }                                                                                                 
   printf("Target Protocol Address: ");                                                              
   for(p = 0; p < protocol_len; p++){                                                                
-    printf("%d", target_protocol_addr[p]);//TODO: Look in printing diff of IPv4/6                   
+    printf("%d", target_protocol_addr[p]);              
     printf((p + 1 < protocol_len)? "." : "\n");                                                     
   }                                                                                                 
   
@@ -137,7 +136,7 @@ void decode_IP_header(const u_char *packet){
 
   uint8_t service_type;
   service_type = packet[1];
-  printf("Service Type: %u \n", service_type);//Usually this is all 0
+  printf("Service Type: %u \n", service_type);//Generally this is all 0
   uint16_t length;
   length = packet[2] * 256 + packet[3];
   printf("Length of the Payload: %u\n", length);
@@ -150,7 +149,7 @@ void decode_IP_header(const u_char *packet){
   //     M =1, more data, =0, last packet
   uint8_t flag;//3 freaking bits. [x][y][z]
   //offset(13bits): indicate where the frag should be placed in reassembly buffer
-  flag = (packet[6] >>  5); //Really gottta double check this stuff
+  flag = (packet[6] >>  5); 
   printf("Flag: %u %u %u\n", (flag >> 2), ((flag >> 1) & 0x01), (flag  & 0x01));
   uint16_t offset;//13 bits, number of #8 bytes
   //make room for p[7]. Then remvoe the first 3 bits. THEN add p7.
@@ -160,7 +159,7 @@ void decode_IP_header(const u_char *packet){
   TTL = packet[8];
   printf("TTL: %u\n", TTL);
 
-  //Gateway (3), Stream(5), Exterior Gateway(8), private interrori gateay(9)
+  //Gateway (3), Stream(5), Exterior Gateway(8), private int gateway(9)
   //Network voice (11), Host Monitoring (20), Reliable (27), 22, 28, 30, 61
   uint8_t ICMP = 1;
   uint8_t TCP = 6;
@@ -196,7 +195,6 @@ void decode_IP_header(const u_char *packet){
 
   //only give this packet the portion it needs
 void decode_ICMP_header(const u_char *packet){
-  //TODO:
   printf("Protocol: ICMP::\n");
   //starts after the IP header.                                                                     
   uint8_t type = packet[0];
