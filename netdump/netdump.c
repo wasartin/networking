@@ -21,7 +21,7 @@
 RETSIGTYPE (*setsignal(int, RETSIGTYPE (*)(int)))(int);
 #endif
 
-char cpre580f98[] = "netdump";//not sure yet
+char cpre580f98[] = "netdump";
 
 void raw_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p);
 
@@ -30,11 +30,11 @@ int packet_type; //ICMP(1), UDP(17), TCP(6) etc.
 char *program_name;
 
 /* Externs */
-extern void bpf_dump(const struct bpf_program *, int); //Berkey packet Filter
+extern void bpf_dump(const struct bpf_program *, int); //Berkley packet Filter
 
 extern char *copy_argv(char **);
 
-// Forwards //Edited THis, added the session struct
+// Forwards //Edited This, added the session struct
 void program_ending(int);
 
 /* Length of saved portion of packet. */
@@ -151,7 +151,7 @@ int main(int argc, char **argv) {
 	exit(0);
 }
 
-/*Programin is ending,  routine is executed on exit */
+/*Program is ending,  routine is executed on exit */
 void program_ending(int signo) {
 	struct pcap_stat stat;
 	
@@ -250,7 +250,6 @@ void raw_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p) {
   default_print(p, caplen);
   putchar('\n');  
   printf("\n\t ------------[END OF RAW DATA]------------\n");
-  //  free(currPacket.raw_data);
 }
 
 
